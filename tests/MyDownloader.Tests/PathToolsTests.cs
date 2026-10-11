@@ -56,4 +56,19 @@ public class PathToolsTests
         Assert.Equal("--", PathTools.FormatEta(long.MaxValue, 0.1));
         Assert.Equal("--", PathTools.FormatEta(-5, 100));
     }
+
+    [Theory]
+    [InlineData("https://a.com/file.zip", true)]
+    [InlineData("https://a.com/file.exe?x=1", true)]
+    [InlineData("http://a.com/a/b/Video.MP4", true)]
+    [InlineData("https://a.com/download", false)]      // 无扩展名的网页
+    [InlineData("https://a.com/page.html", false)]     // html 网页
+    [InlineData("https://obsidian.md/download", false)] // 普通网页
+    [InlineData("ftp://a.com/file.zip", false)]        // 非 http
+    [InlineData("not a url", false)]
+    [InlineData("", false)]
+    public void 判断是否像下载链接(string url, bool expected)
+    {
+        Assert.Equal(expected, PathTools.LooksLikeDownloadUrl(url));
+    }
 }

@@ -16,6 +16,17 @@ namespace MyDownloader.App
         private ClipboardMonitor? _clipboardMonitor;
         private bool _exiting;
 
+        /// <summary>在资源管理器中打开并选中文件。</summary>
+        private static void OpenInExplorer(string filePath)
+        {
+            try
+            {
+                if (System.IO.File.Exists(filePath))
+                    System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{filePath}\"");
+            }
+            catch { /* 忽略 */ }
+        }
+
         public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
         public override void OnFrameworkInitializationCompleted()
@@ -27,13 +38,14 @@ namespace MyDownloader.App
                 DownloadManager.Instance.LoadPersistedTasks();
                 ThemeService.Apply(DownloadManager.Instance.Settings);
 
-                // 任务完成/失败时弹 Toast 通知。
+                // 任务完成/失败时弹 Toast 通知；完成时点击可打开文件所在文件夹。
                 DownloadManager.Instance.TaskCompleted += (_, id) =>
                 {
                     var snap = DownloadManager.Instance.GetSnapshot(id);
                     if (snap == null) return;
                     if (snap.Status == Downloader.DownloadStatus.Completed)
-                        NotificationService.Show("下载完成", snap.FileName);
+                        NotificationService.Show("下载完成", snap.FileName,
+                            onClick: () => OpenInExplorer(snap.FilePath));
                     else if (snap.Status == Downloader.DownloadStatus.Failed)
                         NotificationService.Show("下载失败", snap.FileName);
                 };
@@ -51,14 +63,16 @@ namespace MyDownloader.App
                 var clip = new ClipboardMonitor(
                     onUrl: url =>
                     {
-                        if (_mainWindow.IsVisible)
-                        {
-                            _mainWindow.PromptAddUrl(url);
-                        }
-                        else
-                        {
-                            NotificationService.Show("检测到下载链接", url);
-                        }
+                        // 永不自动弹框（避免打断复制操作），只弹可点击的 Toast；
+                        // 点击后显示主窗口并弹出添加任务对话框。
+                        NotificationService.Show("检测到下载链接", url,
+                            onClick: () =>
+                            {
+                                _mainWindow.Show();
+                                _mainWindow.WindowState = WindowState.Normal;
+                                _mainWindow.Activate();
+                                _mainWindow.PromptAddUrl(url);
+                            });
                     },
                     readClipboard: () => _mainWindow.Clipboard?.TryGetTextAsync() ?? Task.FromResult<string?>(null));
                 _clipboardMonitor = clip;

@@ -27,6 +27,38 @@ namespace MyDownloader.Core
         }
 
         /// <summary>
+        /// 常见可下载文件扩展名（小写，含点）。
+        /// </summary>
+        private static readonly HashSet<string> DownloadExtensions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz", ".iso", ".img",
+            ".exe", ".msi", ".apk", ".dmg", ".deb", ".rpm", ".appx", ".msix",
+            ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".csv", ".epub", ".mobi",
+            ".mp3", ".flac", ".wav", ".aac", ".ogg", ".m4a",
+            ".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".webm", ".ts", ".m4v",
+            ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".svg", ".tif", ".tiff",
+            ".bin", ".dat", ".jar", ".war", ".pkg", ".torrent"
+        };
+
+        /// <summary>
+        /// 判断链接是否"看起来像"可下载的文件（http/https 且路径末段带常见文件扩展名）。
+        /// 用于剪贴板监听，避免对普通网页地址提示。
+        /// </summary>
+        public static bool LooksLikeDownloadUrl(string? url)
+        {
+            if (string.IsNullOrWhiteSpace(url)) return false;
+            if (!url.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+                && !url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            var name = ExtractFileName(url);
+            if (string.IsNullOrEmpty(name)) return false;
+
+            var ext = Path.GetExtension(name);
+            return !string.IsNullOrEmpty(ext) && DownloadExtensions.Contains(ext);
+        }
+
+        /// <summary>
         /// 若目标路径已存在，追加 (1)、(2)… 序号。
         /// </summary>
         public static string EnsureUniquePath(string path)

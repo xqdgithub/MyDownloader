@@ -47,10 +47,10 @@ namespace MyDownloader.App.Services
                 Dispatcher.UIThread.Post(async () =>
                 {
                     var text = (await _readClipboard())?.Trim();
+                    // 仅对"看起来像可下载文件"的链接触发，避免对普通网页地址打扰。
                     if (!string.IsNullOrEmpty(text)
                         && text != _last
-                        && (text.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
-                            || text.StartsWith("https://", StringComparison.OrdinalIgnoreCase)))
+                        && MyDownloader.Core.PathTools.LooksLikeDownloadUrl(text))
                     {
                         _last = text;
                         _onUrl(text);
