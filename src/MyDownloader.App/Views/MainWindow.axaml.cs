@@ -9,6 +9,9 @@ namespace MyDownloader.App.Views
     {
         private readonly MainViewModel _vm;
 
+        /// <summary>按任务 Id 缓存详情窗口，保证同一任务只打开一个窗口。</summary>
+        private readonly Dictionary<string, TaskDetailWindow> _detailWindows = new();
+
         public MainWindow()
         {
             InitializeComponent();
@@ -45,7 +48,18 @@ namespace MyDownloader.App.Views
 
         private void ShowDetail(string id)
         {
+            // 同一任务只保留一个详情窗口：已存在则激活，否则新建。
+            if (_detailWindows.TryGetValue(id, out var existing))
+            {
+                existing.Show();
+                existing.WindowState = WindowState.Normal;
+                existing.Activate();
+                return;
+            }
+
             var win = new TaskDetailWindow(id);
+            win.Closed += (_, _) => _detailWindows.Remove(id);
+            _detailWindows[id] = win;
             win.Show(this);
         }
 
