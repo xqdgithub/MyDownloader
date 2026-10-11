@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Input.Platform;
 using Avalonia.Markup.Xaml;
 using MyDownloader.App.Services;
 using MyDownloader.App.Views;
@@ -12,6 +13,7 @@ namespace MyDownloader.App
     {
         private TrayService? _tray;
         private MainWindow? _mainWindow;
+        private ClipboardMonitor? _clipboardMonitor;
         private bool _exiting;
 
         public override void Initialize() => AvaloniaXamlLoader.Load(this);
@@ -34,6 +36,23 @@ namespace MyDownloader.App
                         _mainWindow.Hide();
                     }
                 };
+
+                var clip = new ClipboardMonitor(
+                    onUrl: url =>
+                    {
+                        if (_mainWindow.IsVisible)
+                        {
+                            _mainWindow.PromptAddUrl(url);
+                        }
+                        else
+                        {
+                            NotificationService.Show("检测到下载链接", url);
+                        }
+                    },
+                    readClipboard: () => _mainWindow.Clipboard?.TryGetTextAsync().GetAwaiter().GetResult());
+                _clipboardMonitor = clip;
+                _mainWindow.Opened += (_, _) => clip.Attach(_mainWindow);
+
                 desktop.MainWindow = _mainWindow;
 
                 _tray = new TrayService(
@@ -48,6 +67,7 @@ namespace MyDownloader.App
                         _exiting = true;
                         DownloadManager.Instance.Shutdown();
                         _tray?.Dispose();
+                        _clipboardMonitor?.Dispose();
                         desktop.Shutdown();
                     });
             }
