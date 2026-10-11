@@ -26,7 +26,7 @@
 **现有缺陷**
 - `MainForm.cs:78-89` 删除条件 `x.ID == data.Id || string.IsNullOrEmpty(x.ID)` 错乱。
 - `DownloadTaskInfoForm.cs:77-91` 更新分支 `info = downloadTaskInfo` 未写回列表。
-- `SqLiteDataProvider.Set` 缓存未命中时的写入分支可能重复/未覆盖。
+- `SqLiteDataProvider.Set`：DB 已有行但缓存未命中时会插入重复行（`SqLiteDataProvider.cs:107-117`）。
 - `DownloadService` 创建于窗口内，窗口关闭即中断下载。
 - 默认保存目录写死"我的文档"；DB 与路径使用相对 `./`。
 
@@ -46,6 +46,14 @@ Program.Main
 
 **关键决策：UI 用"拉"而非"推"。**
 下载库进度事件频率极高。Manager 只更新内存快照，不向窗口逐事件 `BeginInvoke`；`MainForm` 用约 500ms 的 `Timer` 调 `GetSnapshots()` 增量刷新。窗口开关、托盘、多入口都简单，且无事件风暴。
+
+**数据访问唯一入口**
+- 持久化统一由 Manager 持有唯一的 `SqLiteDataProvider` 实例，其它窗体不再各自 `new`（消除多 EF 上下文并发写同一 SQLite 的锁冲突）。
+- `SqLiteDataProvider` 的静态缓存键需纳入数据库标识（当前 `KeyType` 仅含 `key`+`type`，`SqLiteDataProvider.cs:177-191`），避免不同库互相污染；`Get` 返回的 List 需深拷贝或视为只读，避免调用方原地修改污染缓存。
+- DB 路径由相对 `./`（`ConstData.cs:11-12`）改为绝对路径（如 `%LocalAppData%\MyDownloader\`），避免托盘/快捷方式启动时工作目录不确定。
+
+**事件推送边界**
+- `TaskUpdated` 仅在**状态变化**或**进度节流后**（约 2 秒）触发，绝不逐进度事件触发；`TaskCompleted` 在终态触发。托盘 Tooltip 与 `MainForm` 共用同一 500ms 定时器刷新，不走事件推送。
 
 ## 4. 下载引擎：DownloadManager
 
@@ -68,8 +76,9 @@ Program.Main
 
 **配置要点**
 - `ChunkCount = 8`、`ParallelDownload = true`、`MaxTryAgainOnFailover = 5`。
-- 开启 `CheckDiskSizeBeforeDownload`。
-- 代理：`RequestConfiguration.Proxy = WebRequest.GetSystemWebProxy()`，`Credentials = CredentialCache.DefaultCredentials`，跟随系统代理。
+- 确认 `CheckDiskSizeBeforeDownload`（库默认已为 true，`DownloadConfiguration.cs:17`）。
+- 代理：`var p = WebRequest.GetSystemWebProxy(); p.Credentials = CredentialCache.DefaultCredentials; RequestConfiguration.Proxy = p;`。
+  - **注意**：代理认证凭据必须设在 `IWebProxy.Credentials` 上；`RequestConfiguration.Credentials` 映射到 `HttpWebRequest.Credentials`（**服务器**认证，`Request.cs:93-96`），不得用于代理认证，也不得向任意服务器发送默认凭据。
 
 ## 5. 托盘常驻：TrayAppContext
 
@@ -77,10 +86,13 @@ Program.Main
 - Tooltip 动态更新：`总进度 45% · 3 个任务 · ↓ 2.3MB/s`；空闲显示 `MyDownloader · 空闲`。
 - 右键菜单（最小集）：显示主窗口、暂停全部 / 继续全部（动态启用）、退出。
 - 双击托盘 → 显示/激活主窗口。
-- 主窗口点 X → 隐藏到托盘；首次弹一次气泡"已最小化到托盘，下载继续在后台进行"（配置项记一次）。
-- 退出仅从托盘菜单触发：停所有下载 → 持久化 → 释放 NotifyIcon。
-- 完成气泡：`xxx 下载完成`，点击打开所在文件夹；失败气泡：`xxx 下载失败`。
+- 主窗口点 X → 隐藏到托盘（**仅 Hide，不 Dispose**，保证剪贴板监听的窗口句柄与消息循环存活）；首次弹一次气泡"已最小化到托盘，下载继续在后台进行"（"是否已提示过"记为设置项，存于设置 DB）。
+- 退出仅从托盘菜单触发，完整退出序列：停所有下载并等待 → 持久化落盘 → `NotifyIcon.Visible = false` → 释放 NotifyIcon → 调用 `ExitThreadCore()` 结束 `ApplicationContext`。
+- 系统关机：处理 `SystemEvents.SessionEnding` / `FormClosing`，取消退出并走同一退出序列，避免关机中断导致丢数据。
+- 完成气泡：`xxx 下载完成`，`BalloonTipClicked` → 打开所在文件夹；失败气泡：`xxx 下载失败`。
 - 不做开机自启。
+
+**托盘刷新**：与 `MainForm` 共用同一 500ms 定时器（由 `TrayAppContext` 持有），读 `GetSnapshots()` 更新 Tooltip，不走事件推送。
 
 ## 6. 主界面进度体验：MainForm
 
@@ -97,6 +109,7 @@ Program.Main
 | 操作 | 查看 / 删除，增加"暂停 / 继续"（按状态切换） |
 
 **刷新**：500ms `Timer` 调 `GetSnapshots()`，按 `Id` 增量更新对应行的进度/速度/剩余/状态；不整表重建（避免闪烁、丢失选中/滚动）。删除旧的 `RefreshMainTable` 整表刷新。
+- AntdUI 无 `RefreshRow` API，Table 依赖行对象的 `INotifyPropertyChanged` 触发单元格刷新。因此 `TableItem` 的属性 setter 必须调用 `OnPropertyChanged`，且进度/状态等被替换的单元格对象需重建后赋回属性，才能实现增量更新。
 
 **行操作联动**：运行中显示"暂停"；已暂停显示"继续"；已完成显示"打开文件夹"。删除运行中任务需先取消。
 
@@ -110,6 +123,7 @@ Program.Main
 
 **剪贴板监听**
 - `AddClipboardFormatListener`（Win32）+ 重写 `WndProc` 处理 `WM_CLIPBOARDUPDATE`。
+- 宿主窗口：因主窗口点 X 仅隐藏（不 Dispose），可将监听寄生于 `MainForm`；若主窗口可能被真正关闭，则在 `TrayAppContext` 用 `NativeWindow` 创建独立消息窗口承载，保证无主窗口时监听仍有效。
 - 内容为 http/https URL 且与上次不同 → 触发。
 - 主窗口可见：弹添加框预填 URL 与推导文件名；窗口隐藏/托盘：仅在托盘气泡提示，不主动弹窗。
 - 去重：记录上次处理内容。
@@ -117,7 +131,8 @@ Program.Main
 
 **拖拽添加**
 - `MainForm.AllowDrop = true`，处理 `DragEnter` / `DragDrop`。
-- 支持拖入 URL 文本；支持拖入 `.txt`（每行一个链接）批量添加。
+- 支持的 `DataFormat`：`DataFormats.UniformResourceLocator`（浏览器拖链接）、`DataFormats.Text`、`DataFormats.FileDrop`（`.txt`，每行一个链接）。
+- 拖入 `.txt` 时读取每行链接批量添加。
 - 不做种子文件等。
 
 **添加对话框**
@@ -131,18 +146,24 @@ Program.Main
 **修复现有缺陷**
 - `MainForm.cs` 删除按精确 `Id`。
 - `AddOrUpdateTaskInfoAsync` 更新分支写回列表。
-- `SqLiteDataProvider.Set` 统一为"存在则更新、不存在则插入"。
+- `SqLiteDataProvider.Set`：真正缺陷是"DB 已有行但缓存未命中时会插入重复行"（未命中分支 `SqLiteDataProvider.cs:107-117` 直接 `Add`），修复为统一"存在则更新、不存在则插入"。
 
-**持久化内容**
-- `DownloadTaskInfo` 增加运行时字段：`Progress`、`ReceivedBytes`、`Speed`（用于列表恢复显示）。
-- 序列化 `DownloadPackage.Chunks`（含每块 `Start` / `End` / `Position`）、`TotalFileSize`、`FileName`、`Urls`、`Status`。
+**持久化内容（字段白名单，必须排除 Storage）**
+- **禁止直接序列化整个 `DownloadPackage`**：其公有属性 `Storage`（`DownloadPackage.cs:71`）为 `ConcurrentStream`，`Path` setter 会立即打开 `FileStream`（`ConcurrentStream.cs:24-34`），构造时还会启动后台 Watcher 任务（`ConcurrentStream.cs:158-170`）；内存流的 `Data` getter 会把整文件读入 JSON（`ConcurrentStream.cs:39-61`）。直接序列化会导致**启动时对每个任务打开文件句柄 + 拉起后台线程 + 句柄泄漏**。
+- 采用持久化 DTO（或给 `Storage`/`ReceivedBytesSize`/`InMemoryStream` 加 `[JsonIgnore]`），仅持久化白名单字段：
+  - 任务层：`ID`、`Url`、`FilePath`、`StartTime`、`EndTime`、`Status`。
+  - package 层：`TotalFileSize`、`FileName`、`Urls`、`IsSupportDownloadInRange`，以及 `Chunks` 的 `Start` / `End` / `Position`。
+- 反序列化后**不得**创建任何文件句柄或后台任务；`Storage` 一律为 null，续传时由 `BuildStorage` 重新创建。
+- 不持久化 `Speed`（重启后无意义）；进度显示可由 `Chunks` 的 `Position` 推导，如保留 `Progress` 亦仅作展示缓存。
 
 **续传原理**
 - `DownloadFileTaskAsync(package, urls)` 接受已有 package；库在 `ChunkHub.SetFileChunks` 检测到 `Chunks != null` 即 `package.Validate()` 复用已有位置（`ChunkHub.cs:42-45`），未完成分块从 `Position` 继续。
+- 续传必须走 `DownloadFileTaskAsync(package, urls)` 重载，**不得**走 `DownloadFileTaskAsync(fileName)`（后者会 `File.Delete` 已存在文件，`AbstractDownloadService.cs:363-381`）。
+- 续传前校验：若服务端 `TotalFileSize` 与持久化值不一致，或本地文件缺失，则判定不可续传并重下（避免错位拼接）。
 
 **恢复时机**
-- 启动时加载任务列表，对未完成状态（Running/Paused/Stopped/Created）标记为"已暂停"，不自动开跑。
-- 用户点"继续" → 用持久化 package 恢复下载。
+- 启动时加载任务列表，对未完成状态（`Created`/`None`/`Running`/`Stopped`/`Paused`）标记为"已暂停"，不自动开跑。
+  - `None`/`Created` 且 `Chunks` 为 null 的任务本就无法续传（`DownloadPackage` 默认 `Chunks` 为 null），显示为"未开始"，点击从头下载。
 
 **持久化时机**
 - 状态变化（开始/暂停/完成/失败）写库。
@@ -153,10 +174,10 @@ Program.Main
 
 - 所有下载异常由 Manager 捕获 → 任务 `Status = Failed` + `ErrorMessage`，不冒泡崩溃。
 - 网络错误由库 `MaxTryAgainOnFailover=5` 重试，Manager 只处理最终失败。
-- 磁盘空间不足：开启库的 `CheckDiskSizeBeforeDownload`。
+- 磁盘空间不足：确认 `CheckDiskSizeBeforeDownload`（库默认已 true）。
 - 持久化异常：不阻断下载，忽略/记日志。
 - 跨线程：UI 更新统一由 `MainForm` 的 Timer 在 UI 线程读快照，避免 `BeginInvoke` 风暴与竞态。
-- 同名文件：自动加序号 `name(1).ext`。
+- 同名文件：自动加序号 `name(1).ext`，并**同步更新** DB 的 `FilePath` 与 package 的 `FileName`；并发同名生成需加锁避免竞态。
 - 无法推导文件名：默认 `download_<时间戳>`。
 - 应用退出：停所有下载 → 持久化 → 释放 NotifyIcon → 退出。
 
