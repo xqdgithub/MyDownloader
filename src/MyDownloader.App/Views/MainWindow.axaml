@@ -70,14 +70,16 @@
               </DataGridTemplateColumn.CellTemplate>
             </DataGridTemplateColumn>
             <DataGridTextColumn Header="大小" Binding="{Binding SizeText}" Width="100"/>
-            <DataGridTemplateColumn Header="进度" Width="180">
+            <DataGridTemplateColumn Header="进度" Width="200">
               <DataGridTemplateColumn.CellTemplate>
                 <DataTemplate x:DataType="vm:TaskItemViewModel">
-                  <Grid ColumnDefinitions="*,48" VerticalAlignment="Center">
+                  <Grid VerticalAlignment="Center">
                     <ProgressBar Value="{Binding Progress}" Minimum="0" Maximum="100"
-                                 Height="12" VerticalAlignment="Center" CornerRadius="6"/>
-                    <TextBlock Grid.Column="1" Text="{Binding ProgressText}" Classes="muted"
-                               VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                                 Height="18" VerticalAlignment="Center" CornerRadius="9"
+                                 Background="#C9CDD4"/>
+                    <TextBlock Text="{Binding ProgressText}" HorizontalAlignment="Center"
+                               VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold"
+                               Foreground="White"/>
                   </Grid>
                 </DataTemplate>
               </DataGridTemplateColumn.CellTemplate>

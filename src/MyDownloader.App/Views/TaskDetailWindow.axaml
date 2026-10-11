@@ -31,11 +31,12 @@
     <!-- 总进度卡片 -->
     <Border DockPanel.Dock="Top" Classes="card" Margin="0,0,0,12">
       <StackPanel Spacing="8">
-        <Grid ColumnDefinitions="*,48">
-          <ProgressBar Value="{Binding Progress}" Minimum="0" Maximum="100" Height="16" CornerRadius="8"/>
-          <TextBlock Grid.Column="1" Text="{Binding ProgressText}" VerticalAlignment="Center"
-                     HorizontalAlignment="Right" FontWeight="SemiBold"
-                     Foreground="{DynamicResource PrimaryBrush}"/>
+        <Grid VerticalAlignment="Center">
+          <ProgressBar Value="{Binding Progress}" Minimum="0" Maximum="100" Height="20"
+                       CornerRadius="10" Background="#C9CDD4"/>
+          <TextBlock Text="{Binding ProgressText}" HorizontalAlignment="Center"
+                     VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold"
+                     Foreground="White"/>
         </Grid>
         <StackPanel Orientation="Horizontal" Spacing="20">
           <TextBlock Classes="muted" Text="{Binding SpeedText, StringFormat='速度  {0}'}"/>
