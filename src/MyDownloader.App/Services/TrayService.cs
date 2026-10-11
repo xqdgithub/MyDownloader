@@ -40,6 +40,7 @@ namespace MyDownloader.App.Services
 
             _tray = new TrayIcon
             {
+                Icon = LoadIcon(),
                 ToolTipText = "MyDownloader · 空闲",
                 Menu = menu,
                 IsVisible = true
@@ -49,6 +50,19 @@ namespace MyDownloader.App.Services
             _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
             _timer.Tick += (_, _) => RefreshTooltip();
             _timer.Start();
+        }
+
+        private static WindowIcon? LoadIcon()
+        {
+            try
+            {
+                return new WindowIcon(Avalonia.Platform.AssetLoader.Open(
+                    new Uri("avares://MyDownloader.App/Assets/app.ico")));
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private void RefreshTooltip()

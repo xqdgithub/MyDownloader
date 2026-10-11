@@ -23,7 +23,7 @@ namespace MyDownloader.App.Services
 
                 var win = new Window
                 {
-                    SystemDecorations = WindowDecorations.None,
+                    WindowDecorations = WindowDecorations.None,
                     ShowInTaskbar = false,
                     CanResize = false,
                     Topmost = true,
