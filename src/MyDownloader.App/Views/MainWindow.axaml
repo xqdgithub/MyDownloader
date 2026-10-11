@@ -4,7 +4,7 @@
         x:Class="MyDownloader.App.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         Title="MyDownloader" Icon="/Assets/app.ico"
-        Width="980" Height="620" MinWidth="760" MinHeight="460"
+        Width="1120" Height="640" MinWidth="860" MinHeight="460"
         Background="{DynamicResource PageBgBrush}"
         DragDrop.AllowDrop="True">
   <Window.Styles>
@@ -62,15 +62,15 @@
                   Background="Transparent"
                   Name="TaskGrid">
           <DataGrid.Columns>
-            <DataGridTemplateColumn Header="文件名" Width="*">
+            <DataGridTemplateColumn Header="文件名" Width="*" MinWidth="180">
               <DataGridTemplateColumn.CellTemplate>
                 <DataTemplate x:DataType="vm:TaskItemViewModel">
                   <TextBlock Text="{Binding FileName}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                 </DataTemplate>
               </DataGridTemplateColumn.CellTemplate>
             </DataGridTemplateColumn>
-            <DataGridTextColumn Header="大小" Binding="{Binding SizeText}" Width="110"/>
-            <DataGridTemplateColumn Header="进度" Width="220">
+            <DataGridTextColumn Header="大小" Binding="{Binding SizeText}" Width="100"/>
+            <DataGridTemplateColumn Header="进度" Width="180">
               <DataGridTemplateColumn.CellTemplate>
                 <DataTemplate x:DataType="vm:TaskItemViewModel">
                   <Grid ColumnDefinitions="*,48" VerticalAlignment="Center">
@@ -82,9 +82,9 @@
                 </DataTemplate>
               </DataGridTemplateColumn.CellTemplate>
             </DataGridTemplateColumn>
-            <DataGridTextColumn Header="速度" Binding="{Binding SpeedText}" Width="100"/>
-            <DataGridTextColumn Header="剩余" Binding="{Binding EtaText}" Width="90"/>
-            <DataGridTemplateColumn Header="状态" Width="96">
+            <DataGridTextColumn Header="速度" Binding="{Binding SpeedText}" Width="90"/>
+            <DataGridTextColumn Header="剩余" Binding="{Binding EtaText}" Width="80"/>
+            <DataGridTemplateColumn Header="状态" Width="88">
               <DataGridTemplateColumn.CellTemplate>
                 <DataTemplate x:DataType="vm:TaskItemViewModel">
                   <Border Classes="pill" Background="{Binding StatusBrush}">
@@ -93,7 +93,7 @@
                 </DataTemplate>
               </DataGridTemplateColumn.CellTemplate>
             </DataGridTemplateColumn>
-            <DataGridTemplateColumn Header="操作" Width="320">
+            <DataGridTemplateColumn Header="操作" Width="Auto">
               <DataGridTemplateColumn.CellTemplate>
                 <DataTemplate x:DataType="vm:TaskItemViewModel">
                   <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
