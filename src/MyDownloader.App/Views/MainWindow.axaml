@@ -1,0 +1,6 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="MyDownloader.App.Views.MainWindow"
+        Title="MyDownloader" Width="900" Height="560">
+  <TextBlock Text="MyDownloader" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="24"/>
+</Window>
