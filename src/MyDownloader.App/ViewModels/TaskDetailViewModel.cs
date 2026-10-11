@@ -25,6 +25,7 @@ namespace MyDownloader.App.ViewModels
         [ObservableProperty] private string _overviewText = string.Empty;
         [ObservableProperty] private string _etaText = string.Empty;
         [ObservableProperty] private string _statusText = string.Empty;
+        [ObservableProperty] private Avalonia.Media.IBrush _progressBrush = Avalonia.Media.Brushes.Gray;
 
         // 按钮可用状态
         [ObservableProperty] private bool _canPause;
@@ -53,6 +54,7 @@ namespace MyDownloader.App.ViewModels
             FilePath = snap.FilePath;
             Progress = snap.Progress;
             ProgressText = $"{snap.Progress:0}%";
+            ProgressBrush = StatusColors.Brush(snap.Status);
             SpeedText = snap.SpeedText;
             EtaText = snap.Eta;
             OverviewText = PathTools.FormatOverview(snap.ReceivedBytes, snap.TotalBytes);

@@ -77,7 +77,7 @@
                   <Grid VerticalAlignment="Center">
                     <ProgressBar Value="{Binding Progress}" Minimum="0" Maximum="100"
                                  Height="18" VerticalAlignment="Center" CornerRadius="9"
-                                 Background="#C9CDD4"/>
+                                 Background="#C9CDD4" Foreground="{Binding ProgressBrush}"/>
                     <TextBlock Text="{Binding ProgressText}" HorizontalAlignment="Center"
                                VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold"
                                Foreground="White"/>

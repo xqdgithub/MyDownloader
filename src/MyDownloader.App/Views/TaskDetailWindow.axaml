@@ -35,7 +35,7 @@
       <StackPanel Spacing="8">
         <Grid VerticalAlignment="Center">
           <ProgressBar Value="{Binding Progress}" Minimum="0" Maximum="100" Height="20"
-                       CornerRadius="10" Background="#C9CDD4"/>
+                       CornerRadius="10" Background="#C9CDD4" Foreground="{Binding ProgressBrush}"/>
           <TextBlock Text="{Binding ProgressText}" HorizontalAlignment="Center"
                      VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold"
                      Foreground="White"/>
@@ -62,7 +62,8 @@
                   <TextBlock Text="{Binding Index, StringFormat='块 {0}'}" Classes="muted"
                              VerticalAlignment="Center"/>
                   <ProgressBar Grid.Column="1" Value="{Binding Progress}" Minimum="0" Maximum="100"
-                               Height="12" VerticalAlignment="Center" CornerRadius="6"/>
+                               Height="12" VerticalAlignment="Center" CornerRadius="6"
+                               Foreground="{Binding State, Converter={x:Static vm:Converters.ChunkStateToBrush}}"/>
                   <Border Grid.Column="2" Classes="pill"
                           Background="{Binding State, Converter={x:Static vm:Converters.ChunkStateToBrush}}"
                           HorizontalAlignment="Right">

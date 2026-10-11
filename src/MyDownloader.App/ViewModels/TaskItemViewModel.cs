@@ -66,7 +66,8 @@ namespace MyDownloader.App.ViewModels
                 DownloadStatus.Running => "下载中",
                 _ => "未开始"
             };
-            StatusBrush = StatusToBrush(snap.Status);
+            StatusBrush = StatusColors.Brush(snap.Status);
+            OnPropertyChanged(nameof(ProgressBrush));
             OnPropertyChanged(nameof(IsRunning));
             OnPropertyChanged(nameof(IsPaused));
             OnPropertyChanged(nameof(IsStopped));
@@ -81,14 +82,7 @@ namespace MyDownloader.App.ViewModels
             OnPropertyChanged(nameof(ResumeText));
         }
 
-        private static Avalonia.Media.IBrush StatusToBrush(DownloadStatus status) => status switch
-        {
-            DownloadStatus.Completed => new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#52C41A")),
-            DownloadStatus.Failed => new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#FF4D4F")),
-            DownloadStatus.Paused => new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#FAAD14")),
-            DownloadStatus.Stopped => new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#8C8C8C")),
-            DownloadStatus.Running => new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#1677FF")),
-            _ => new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#8C8C8C"))
-        };
+        /// <summary>进度条颜色跟随状态。</summary>
+        public Avalonia.Media.IBrush ProgressBrush => StatusColors.Brush(Status);
     }
 }

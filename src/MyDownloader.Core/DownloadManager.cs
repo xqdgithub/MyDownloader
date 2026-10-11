@@ -96,9 +96,17 @@ namespace MyDownloader.Core
             var status = package?.Status ?? DownloadStatus.None;
             var isRunning = status == DownloadStatus.Running;
             var chunks = package?.Chunks;
-            var chunkSnapshots = chunks == null
-                ? Array.Empty<ChunkSnapshot>()
-                : chunks.Select((c, i) => new ChunkSnapshot
+
+            // 缓存分块区间（库在完成后会清空 Chunks，用缓存保留分块展示）。
+            if (chunks is { Length: > 0 })
+            {
+                h.CachedChunkRanges = chunks.Select(c => (c.Start, c.End)).ToArray();
+            }
+
+            ChunkSnapshot[] chunkSnapshots;
+            if (chunks is { Length: > 0 })
+            {
+                chunkSnapshots = chunks.Select((c, i) => new ChunkSnapshot
                 {
                     Index = i,
                     Start = c.Start,
@@ -106,6 +114,23 @@ namespace MyDownloader.Core
                     Position = c.Position,
                     TaskStatus = status
                 }).ToArray();
+            }
+            else if (h.CachedChunkRanges is { Length: > 0 })
+            {
+                // 分块已被库清空（如完成）：用缓存区间展示为已完成。
+                chunkSnapshots = h.CachedChunkRanges.Select((r, i) => new ChunkSnapshot
+                {
+                    Index = i,
+                    Start = r.Start,
+                    End = r.End,
+                    Position = r.End - r.Start + 1,
+                    TaskStatus = status
+                }).ToArray();
+            }
+            else
+            {
+                chunkSnapshots = Array.Empty<ChunkSnapshot>();
+            }
 
             return new TaskSnapshot
             {
