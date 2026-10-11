@@ -29,7 +29,7 @@ namespace MyDownloader.App.Services
             menu.Add(_pauseAll);
 
             _resumeAll = new NativeMenuItem("继续全部");
-            _resumeAll.Click += (_, _) => DownloadManager.Instance.ResumeAll();
+            _resumeAll.Click += (_, _) => _ = DownloadManager.Instance.ResumeAllAsync();
             menu.Add(_resumeAll);
 
             menu.Add(new NativeMenuItemSeparator());

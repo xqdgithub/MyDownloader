@@ -299,7 +299,7 @@ namespace MyDownloader.Core
             }
         }
 
-        public void Resume(string id)
+        public async Task ResumeAsync(string id)
         {
             if (!_tasks.TryGetValue(id, out var h)) return;
 
@@ -318,12 +318,18 @@ namespace MyDownloader.Core
                 Persist();
                 TaskUpdated?.Invoke(this, id);
             }
-            else if (status == DownloadStatus.Stopped)
+            else if (status is DownloadStatus.Stopped or DownloadStatus.Failed)
             {
-                // 已取消：释放旧 Service 后重新入队续传。
-                try { h.Service.Dispose(); } catch { /* 忽略 */ }
+                // 已取消或失败：异步释放旧 Service 后重新入队续传（不阻塞 UI）。
+                var old = h.Service;
                 h.Service = null!;
+                if (status == DownloadStatus.Failed)
+                {
+                    h.ErrorMessage = null;
+                    h.Info.DownloadPackage!.Status = DownloadStatus.None;
+                }
                 EnqueueAndPump(id);
+                await DisposeServiceAsync(old);
             }
         }
 
@@ -335,24 +341,37 @@ namespace MyDownloader.Core
             }
         }
 
-        public void Remove(string id)
+        /// <summary>
+        /// 异步释放 DownloadService。库的 Dispose() 会同步阻塞（内部 Clear().Wait()），
+        /// 故使用非阻塞的 DisposeAsync()，避免卡住 UI 线程。
+        /// </summary>
+        private static async Task DisposeServiceAsync(DownloadService? service)
+        {
+            if (service == null) return;
+            try { await service.DisposeAsync().ConfigureAwait(false); } catch { /* 忽略与运行中 RunAsync 的竞争 */ }
+        }
+
+        public async Task RemoveAsync(string id)
         {
             if (_tasks.TryRemove(id, out var h))
             {
-                h.Service?.CancelAsync();
-                try { h.Service?.Dispose(); } catch { /* 忽略与运行中 RunAsync 的竞争 */ }
+                try { h.Service?.CancelAsync(); } catch { /* 忽略 */ }
                 Persist();
+                await DisposeServiceAsync(h.Service);
             }
         }
 
         /// <summary>覆盖式重新下载：清空分块与目标文件后从头下载，不生成 (1) 副本。</summary>
-        public void Redownload(string id)
+        public async Task RedownloadAsync(string id)
         {
             if (!_tasks.TryGetValue(id, out var h)) return;
 
             try { h.Service?.CancelAsync(); } catch { /* 忽略 */ }
-            try { h.Service?.Dispose(); } catch { /* 忽略 */ }
+            var old = h.Service;
             h.Service = null!;
+
+            // 先等待旧 Service 完全停止，再删文件/重启，避免与仍在写入的下载竞争。
+            await DisposeServiceAsync(old);
 
             // 删除已存在的目标文件，避免残留。
             try { if (File.Exists(h.FilePath)) File.Delete(h.FilePath); } catch { /* 忽略 */ }
@@ -377,10 +396,10 @@ namespace MyDownloader.Core
                 Pause(h.Id);
         }
 
-        public void ResumeAll()
+        public async Task ResumeAllAsync()
         {
             foreach (var h in _tasks.Values.Where(x => x.Info.DownloadPackage?.Status == DownloadStatus.Paused))
-                Resume(h.Id);
+                await ResumeAsync(h.Id);
         }
 
         /// <summary>应用退出：停所有下载并强制落盘。</summary>
@@ -389,9 +408,13 @@ namespace MyDownloader.Core
             foreach (var h in _tasks.Values)
             {
                 try { h.Service?.CancelAsync(); } catch { /* 忽略 */ }
-                try { h.Service?.Dispose(); } catch { /* 忽略与运行中 RunAsync 的竞争 */ }
             }
             Persist();
+            // 退出时异步释放，不阻塞调用线程；进程即将结束，无需等待。
+            foreach (var h in _tasks.Values)
+            {
+                _ = DisposeServiceAsync(h.Service);
+            }
         }
 
         // ---- 持久化（经 _dbLock 串行化，DbContext 非线程安全）----

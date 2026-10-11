@@ -58,7 +58,7 @@ namespace MyDownloader.App.ViewModels
         }
 
         [RelayCommand] private void PauseAll() => _manager.PauseAll();
-        [RelayCommand] private void ResumeAll() => _manager.ResumeAll();
+        [RelayCommand] private async Task ResumeAll() => await _manager.ResumeAllAsync();
 
         /// <summary>新增任务并立即刷新列表。</summary>
         public void AddTask(string url, string path)
@@ -90,21 +90,21 @@ namespace MyDownloader.App.ViewModels
         private void PauseItem(TaskItemViewModel? item) { if (item != null) _manager.Pause(item.Id); }
 
         [RelayCommand]
-        private void ResumeItem(TaskItemViewModel? item) { if (item != null) _manager.Resume(item.Id); }
+        private async Task ResumeItem(TaskItemViewModel? item) { if (item != null) await _manager.ResumeAsync(item.Id); }
 
         [RelayCommand]
         private void CancelItem(TaskItemViewModel? item) { if (item != null) _manager.Cancel(item.Id); }
 
         [RelayCommand]
-        private void RedownloadItem(TaskItemViewModel? item) { if (item != null) _manager.Redownload(item.Id); }
+        private async Task RedownloadItem(TaskItemViewModel? item) { if (item != null) await _manager.RedownloadAsync(item.Id); }
 
         [RelayCommand]
-        private void RemoveItem(TaskItemViewModel? item)
+        private async Task RemoveItem(TaskItemViewModel? item)
         {
             if (item == null) return;
-            _manager.Remove(item.Id);
             _map.Remove(item.Id);
             Items.Remove(item);
+            await _manager.RemoveAsync(item.Id);
         }
 
         [RelayCommand]
@@ -117,10 +117,10 @@ namespace MyDownloader.App.ViewModels
         }
 
         public void Pause(string id) => _manager.Pause(id);
-        public void Resume(string id) => _manager.Resume(id);
+        public async Task Resume(string id) => await _manager.ResumeAsync(id);
         public void Cancel(string id) => _manager.Cancel(id);
-        public void Redownload(string id) => _manager.Redownload(id);
-        public void Remove(string id) => _manager.Remove(id);
+        public async Task Redownload(string id) => await _manager.RedownloadAsync(id);
+        public async Task Remove(string id) => await _manager.RemoveAsync(id);
         public TaskSnapshot? GetSnapshot(string id) => _manager.GetSnapshot(id);
     }
 }

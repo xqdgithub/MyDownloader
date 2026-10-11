@@ -25,6 +25,13 @@ namespace MyDownloader.App.ViewModels
         [ObservableProperty] private string _etaText = string.Empty;
         [ObservableProperty] private string _statusText = string.Empty;
 
+        // 按钮可用状态
+        [ObservableProperty] private bool _canPause;
+        [ObservableProperty] private bool _canResume;
+        [ObservableProperty] private bool _canCancel;
+        [ObservableProperty] private bool _canRedownload;
+        [ObservableProperty] private string _resumeText = "继续";
+
         public TaskDetailViewModel(string taskId)
         {
             TaskId = taskId;
@@ -65,12 +72,19 @@ namespace MyDownloader.App.ViewModels
             {
                 for (int i = 0; i < Chunks.Count; i++) Chunks[i] = snap.ChunkSnapshots[i];
             }
+
+            // 按状态启用/禁用按钮
+            CanPause = snap.Status == DownloadStatus.Running;
+            CanResume = snap.Status is DownloadStatus.Paused or DownloadStatus.Stopped or DownloadStatus.Failed;
+            CanCancel = snap.Status is DownloadStatus.Running or DownloadStatus.Paused;
+            CanRedownload = snap.Status != DownloadStatus.Running;
+            ResumeText = snap.Status == DownloadStatus.Failed ? "重试" : "继续";
         }
 
         [RelayCommand] private void Pause() => _manager.Pause(TaskId);
-        [RelayCommand] private void Resume() => _manager.Resume(TaskId);
+        [RelayCommand] private async Task Resume() => await _manager.ResumeAsync(TaskId);
         [RelayCommand] private void Cancel() => _manager.Cancel(TaskId);
-        [RelayCommand] private void Redownload() => _manager.Redownload(TaskId);
+        [RelayCommand] private async Task Redownload() => await _manager.RedownloadAsync(TaskId);
 
         public void Stop() => _timer.Stop();
     }
