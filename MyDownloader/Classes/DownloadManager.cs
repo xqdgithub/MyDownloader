@@ -179,7 +179,29 @@ namespace MyDownloader.Classes
             try
             {
                 var package = h.Info.DownloadPackage!;
-                // 续传：已有分块则走 package 重载（不会删除文件）
+                if (package.Chunks is { Length: > 0 })
+                {
+                    // 续传前校验：服务端大小必须与持久化一致，否则重下
+                    long remoteSize;
+                    try
+                    {
+                        var probeConfig = DownloadConfigFactory.Create(_settings.UseSystemProxy);
+                        remoteSize = await new Request(h.Url, probeConfig.RequestConfiguration).GetFileSize();
+                    }
+                    catch
+                    {
+                        remoteSize = -1;
+                    }
+
+                    var localExists = File.Exists(h.FilePath);
+                    if (!localExists || (remoteSize > 0 && remoteSize != package.TotalFileSize))
+                    {
+                        // 不可续传：清空分块，从头下载
+                        package.Chunks = null;
+                        h.ReceivedBytes = 0;
+                    }
+                }
+
                 if (package.Chunks is { Length: > 0 })
                 {
                     package.FileName = h.FilePath;
