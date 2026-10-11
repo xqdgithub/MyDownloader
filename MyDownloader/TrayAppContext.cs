@@ -15,6 +15,8 @@ namespace MyDownloader
         private readonly ToolStripMenuItem _resumeAllItem;
         private readonly ToolStripMenuItem _clipboardItem;
         private bool _exiting;
+        private string? _pendingClipboardUrl;
+        private string? _lastCompletedPath;
 
         public TrayAppContext()
         {
@@ -27,6 +29,21 @@ namespace MyDownloader
                 Visible = true
             };
             _tray.DoubleClick += (_, _) => ShowMainForm();
+
+            _tray.BalloonTipClicked += (_, _) =>
+            {
+                if (!string.IsNullOrEmpty(_pendingClipboardUrl))
+                {
+                    var url = _pendingClipboardUrl;
+                    _pendingClipboardUrl = null;
+                    ShowMainForm();
+                    _mainForm?.PromptAddUrl(url);
+                    return;
+                }
+                if (!string.IsNullOrEmpty(_lastCompletedPath) && File.Exists(_lastCompletedPath))
+                    System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{_lastCompletedPath}\"");
+                _lastCompletedPath = null;
+            };
 
             var menu = new ContextMenuStrip();
             menu.Items.Add("显示主窗口", null, (_, _) => ShowMainForm());
@@ -55,6 +72,15 @@ namespace MyDownloader
             _timer.Start();
 
             ShowMainForm();
+
+            Microsoft.Win32.SystemEvents.SessionEnding += (_, _) => ExitApp();
+        }
+
+        /// <summary>主窗口隐藏时，剪贴板检测到链接则用托盘气泡提示。</summary>
+        public void NotifyClipboardUrl(string url)
+        {
+            _pendingClipboardUrl = url;
+            _tray.ShowBalloonTip(3000, "检测到下载链接", "点击气泡添加任务", ToolTipIcon.Info);
         }
 
         private void ShowMainForm()
@@ -115,7 +141,10 @@ namespace MyDownloader
             var snap = DownloadManager.Instance.GetSnapshot(id);
             if (snap == null) return;
             if (snap.Status == Downloader.DownloadStatus.Completed)
+            {
+                _lastCompletedPath = snap.FilePath;
                 _tray.ShowBalloonTip(3000, "下载完成", snap.FileName, ToolTipIcon.Info);
+            }
             else if (snap.Status == Downloader.DownloadStatus.Failed)
                 _tray.ShowBalloonTip(3000, "下载失败", snap.FileName, ToolTipIcon.Error);
         }

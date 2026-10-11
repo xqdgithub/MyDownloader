@@ -198,6 +198,16 @@ namespace MyDownloader
             {
                 AddFromUrl(text);
             }
+            else
+            {
+                AppContext?.NotifyClipboardUrl(text);
+            }
+        }
+
+        /// <summary>由托盘气泡点击触发：用指定 URL 打开添加框。</summary>
+        public void PromptAddUrl(string url)
+        {
+            AddFromUrl(url);
         }
 
         // ---- 关闭即隐藏 ----
