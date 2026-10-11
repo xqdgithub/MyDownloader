@@ -1,4 +1,4 @@
-using MyDownloader.Classes;
+using MyDownloader.Core;
 using Xunit;
 
 namespace MyDownloader.Tests;
