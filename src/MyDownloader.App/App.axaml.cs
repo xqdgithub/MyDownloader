@@ -49,7 +49,7 @@ namespace MyDownloader.App
                             NotificationService.Show("检测到下载链接", url);
                         }
                     },
-                    readClipboard: () => _mainWindow.Clipboard?.TryGetTextAsync().GetAwaiter().GetResult());
+                    readClipboard: () => _mainWindow.Clipboard?.TryGetTextAsync() ?? Task.FromResult<string?>(null));
                 _clipboardMonitor = clip;
                 _mainWindow.Opened += (_, _) => clip.Attach(_mainWindow);
 

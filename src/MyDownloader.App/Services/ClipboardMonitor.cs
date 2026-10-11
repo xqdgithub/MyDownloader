@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using Avalonia.Controls;
+using Avalonia.Threading;
 
 namespace MyDownloader.App.Services
 {
@@ -18,10 +19,10 @@ namespace MyDownloader.App.Services
 
         private IntPtr _hwnd;
         private readonly Action<string> _onUrl;
-        private readonly Func<string?> _readClipboard;
+        private readonly Func<Task<string?>> _readClipboard;
         private string _last = string.Empty;
 
-        public ClipboardMonitor(Action<string> onUrl, Func<string?> readClipboard)
+        public ClipboardMonitor(Action<string> onUrl, Func<Task<string?>> readClipboard)
         {
             _onUrl = onUrl;
             _readClipboard = readClipboard;
@@ -42,15 +43,19 @@ namespace MyDownloader.App.Services
         {
             if (msg == WM_CLIPBOARDUPDATE)
             {
-                var text = _readClipboard()?.Trim();
-                if (!string.IsNullOrEmpty(text)
-                    && text != _last
-                    && (text.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
-                        || text.StartsWith("https://", StringComparison.OrdinalIgnoreCase)))
+                // 异步读取剪贴板，避免在 UI 线程同步阻塞造成死锁。
+                Dispatcher.UIThread.Post(async () =>
                 {
-                    _last = text;
-                    _onUrl(text);
-                }
+                    var text = (await _readClipboard())?.Trim();
+                    if (!string.IsNullOrEmpty(text)
+                        && text != _last
+                        && (text.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+                            || text.StartsWith("https://", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        _last = text;
+                        _onUrl(text);
+                    }
+                });
             }
             return IntPtr.Zero;
         }
