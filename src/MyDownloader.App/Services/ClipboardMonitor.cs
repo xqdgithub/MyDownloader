@@ -20,7 +20,8 @@ namespace MyDownloader.App.Services
         private IntPtr _hwnd;
         private readonly Action<string> _onUrl;
         private readonly Func<Task<string?>> _readClipboard;
-        private string _last = string.Empty;
+        private string _lastText = string.Empty;
+        private DateTime _lastTime = DateTime.MinValue;
 
         public ClipboardMonitor(Action<string> onUrl, Func<Task<string?>> readClipboard)
         {
@@ -48,13 +49,17 @@ namespace MyDownloader.App.Services
                 {
                     var text = (await _readClipboard())?.Trim();
                     // 仅对"看起来像可下载文件"的链接触发，避免对普通网页地址打扰。
-                    if (!string.IsNullOrEmpty(text)
-                        && text != _last
-                        && MyDownloader.Core.PathTools.LooksLikeDownloadUrl(text))
-                    {
-                        _last = text;
-                        _onUrl(text);
-                    }
+                    if (string.IsNullOrEmpty(text) || !MyDownloader.Core.PathTools.LooksLikeDownloadUrl(text))
+                        return;
+
+                    // 仅对极短时间内的相同内容去重（防止系统重复写入），
+                    // 用户稍后主动再次复制同一地址仍会提示。
+                    var now = DateTime.Now;
+                    if (text == _lastText && (now - _lastTime).TotalSeconds < 1.5)
+                        return;
+                    _lastText = text;
+                    _lastTime = now;
+                    _onUrl(text);
                 });
             }
             return IntPtr.Zero;
