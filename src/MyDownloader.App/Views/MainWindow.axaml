@@ -5,6 +5,7 @@
         x:DataType="vm:MainViewModel"
         Title="MyDownloader" Icon="/Assets/app.ico"
         Width="1120" Height="640" MinWidth="860" MinHeight="460"
+        WindowStartupLocation="CenterScreen"
         Background="{DynamicResource PageBgBrush}"
         DragDrop.AllowDrop="True">
   <Window.Styles>

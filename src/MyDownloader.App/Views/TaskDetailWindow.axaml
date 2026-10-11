@@ -6,6 +6,7 @@
         x:DataType="vm:TaskDetailViewModel"
         Title="下载任务" Icon="/Assets/app.ico"
         Width="660" Height="560" MinWidth="540" MinHeight="440"
+        WindowStartupLocation="CenterOwner"
         Background="{DynamicResource PageBgBrush}">
   <DockPanel Margin="14" LastChildFill="True">
 
