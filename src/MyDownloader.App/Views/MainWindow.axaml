@@ -1,6 +1,53 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:MyDownloader.App.ViewModels"
         x:Class="MyDownloader.App.Views.MainWindow"
-        Title="MyDownloader" Width="900" Height="560">
-  <TextBlock Text="MyDownloader" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="24"/>
+        x:DataType="vm:MainViewModel"
+        Title="MyDownloader" Width="980" Height="600" MinWidth="720" MinHeight="420">
+  <DockPanel>
+    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="12">
+      <Button Content="+ 添加任务" Classes="accent" Name="AddButton"/>
+      <Button Content="暂停全部" Command="{Binding PauseAllCommand}"/>
+      <Button Content="继续全部" Command="{Binding ResumeAllCommand}"/>
+      <Button Content="主题" Name="ThemeButton"/>
+    </StackPanel>
+
+    <Border DockPanel.Dock="Bottom" Background="#F5F5F5" Padding="12,6">
+      <StackPanel Orientation="Horizontal" Spacing="24">
+        <TextBlock Text="{Binding TotalSpeedText, StringFormat='总速度: {0}'}"/>
+        <TextBlock Text="{Binding ActiveCount, StringFormat='活动任务: {0}'}"/>
+        <TextBlock Text="{Binding CompletedCount, StringFormat='已完成: {0}'}"/>
+      </StackPanel>
+    </Border>
+
+    <DataGrid ItemsSource="{Binding Items}"
+              SelectedItem="{Binding SelectedItem}"
+              AutoGenerateColumns="False"
+              IsReadOnly="True"
+              GridLinesVisibility="Horizontal"
+              CanUserResizeColumns="True"
+              Name="TaskGrid">
+      <DataGrid.Columns>
+        <DataGridTemplateColumn Header="文件名" Width="*">
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate x:DataType="vm:TaskItemViewModel">
+              <TextBlock Text="{Binding FileName}" VerticalAlignment="Center"/>
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
+        <DataGridTextColumn Header="大小" Binding="{Binding SizeText}" Width="110"/>
+        <DataGridTemplateColumn Header="进度" Width="180">
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate x:DataType="vm:TaskItemViewModel">
+              <ProgressBar Value="{Binding Progress}" Minimum="0" Maximum="100"
+                           Height="14" VerticalAlignment="Center"/>
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
+        <DataGridTextColumn Header="速度" Binding="{Binding SpeedText}" Width="100"/>
+        <DataGridTextColumn Header="剩余" Binding="{Binding EtaText}" Width="90"/>
+        <DataGridTextColumn Header="状态" Binding="{Binding StatusText}" Width="90"/>
+      </DataGrid.Columns>
+    </DataGrid>
+  </DockPanel>
 </Window>
