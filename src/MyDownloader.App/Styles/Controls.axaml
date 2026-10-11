@@ -39,6 +39,54 @@
     <Setter Property="Background" Value="{DynamicResource RowHoverBrush}"/>
   </Style>
 
+  <!-- 操作按钮（蓝色描边，可用=蓝，禁用=浅灰） -->
+  <Style Selector="Button.action">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="{DynamicResource ButtonRadius}"/>
+    <Setter Property="Padding" Value="14,6"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+  </Style>
+  <Style Selector="Button.action:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource RowHoverBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource PrimaryHoverBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryHoverBrush}"/>
+  </Style>
+  <Style Selector="Button.action:disabled /template/ ContentPresenter">
+    <Setter Property="Background" Value="#F2F3F5"/>
+    <Setter Property="BorderBrush" Value="#E0E2E6"/>
+    <Setter Property="Foreground" Value="#C0C4CC"/>
+  </Style>
+
+  <!-- 危险操作按钮（红色描边） -->
+  <Style Selector="Button.danger">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="Foreground" Value="{DynamicResource DangerBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource DangerBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="{DynamicResource ButtonRadius}"/>
+    <Setter Property="Padding" Value="14,6"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+  </Style>
+  <Style Selector="Button.danger:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="#FFF1F0"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource DangerBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource DangerBrush}"/>
+  </Style>
+  <Style Selector="Button.danger:disabled /template/ ContentPresenter">
+    <Setter Property="Background" Value="#F2F3F5"/>
+    <Setter Property="BorderBrush" Value="#E0E2E6"/>
+    <Setter Property="Foreground" Value="#C0C4CC"/>
+  </Style>
+
+  <!-- 主按钮禁用态 -->
+  <Style Selector="Button.primary:disabled /template/ ContentPresenter">
+    <Setter Property="Background" Value="#F2F3F5"/>
+    <Setter Property="Foreground" Value="#C0C4CC"/>
+  </Style>
+
   <!-- 行内小操作按钮 -->
   <Style Selector="Button.rowaction">
     <Setter Property="Background" Value="Transparent"/>
@@ -50,6 +98,14 @@
   </Style>
   <Style Selector="Button.rowaction:pointerover /template/ ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource RowHoverBrush}"/>
+  </Style>
+
+  <!-- 行内危险操作（红色文字） -->
+  <Style Selector="Button.rowaction.danger">
+    <Setter Property="Foreground" Value="{DynamicResource DangerBrush}"/>
+  </Style>
+  <Style Selector="Button.rowaction.danger:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="#FFF1F0"/>
   </Style>
 
   <!-- 状态胶囊标签 -->

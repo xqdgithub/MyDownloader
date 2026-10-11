@@ -21,10 +21,11 @@
     <!-- 控制按钮卡片 -->
     <Border DockPanel.Dock="Top" Classes="card" Margin="0,0,0,12" Padding="12,10">
       <StackPanel Orientation="Horizontal" Spacing="8">
-        <Button Classes="secondary" Content="暂停" IsEnabled="{Binding CanPause}" Command="{Binding PauseCommand}"/>
-        <Button Classes="secondary" Content="{Binding ResumeText}" IsEnabled="{Binding CanResume}" Command="{Binding ResumeCommand}"/>
-        <Button Classes="secondary" Content="取消" IsEnabled="{Binding CanCancel}" Command="{Binding CancelCommand}"/>
+        <Button Classes="action" Content="暂停" IsEnabled="{Binding CanPause}" Command="{Binding PauseCommand}"/>
+        <Button Classes="action" Content="{Binding ResumeText}" IsEnabled="{Binding CanResume}" Command="{Binding ResumeCommand}"/>
+        <Button Classes="danger" Content="取消" IsEnabled="{Binding CanCancel}" Command="{Binding CancelCommand}"/>
         <Button Classes="primary" Content="重新下载" IsEnabled="{Binding CanRedownload}" Command="{Binding RedownloadCommand}"/>
+        <Button Classes="action" Content="打开文件夹" IsEnabled="{Binding CanOpenFolder}" Command="{Binding OpenFolderCommand}"/>
       </StackPanel>
     </Border>
 

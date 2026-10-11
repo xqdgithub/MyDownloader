@@ -105,7 +105,7 @@
                     <Button Classes="rowaction" Content="{Binding ResumeText}" IsVisible="{Binding CanResume}"
                             Command="{Binding $parent[DataGrid].((vm:MainViewModel)DataContext).ResumeItemCommand}"
                             CommandParameter="{Binding}"/>
-                    <Button Classes="rowaction" Content="取消" IsVisible="{Binding CanCancel}"
+                    <Button Classes="rowaction danger" Content="取消" IsVisible="{Binding CanCancel}"
                             Command="{Binding $parent[DataGrid].((vm:MainViewModel)DataContext).CancelItemCommand}"
                             CommandParameter="{Binding}"/>
                     <Button Classes="rowaction" Content="查看"
