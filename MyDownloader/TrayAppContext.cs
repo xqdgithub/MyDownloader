@@ -154,6 +154,7 @@ namespace MyDownloader
             if (_exiting) return;
             _exiting = true;
             _timer.Stop();
+            _timer.Dispose();
             DownloadManager.Instance.Shutdown();
             _tray.Visible = false;
             _tray.Dispose();

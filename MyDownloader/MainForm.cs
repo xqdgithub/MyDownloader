@@ -247,6 +247,9 @@ namespace MyDownloader
         public CellBadge? status { get; set; }
         public CellLink[]? oper { get; set; }
 
+        /// <summary>上一次的状态；用于判断 status/oper 是否真正变化，保持增量刷新。</summary>
+        private Downloader.DownloadStatus? _lastStatus;
+
         /// <summary>把快照写回本行；有变化返回 true。</summary>
         public bool Apply(TaskSnapshot snap)
         {
@@ -274,24 +277,33 @@ namespace MyDownloader
             if (speed != snap.SpeedText) { speed = snap.SpeedText; OnPropertyChanged(nameof(speed)); changed = true; }
             if (eta != snap.Eta) { eta = snap.Eta; OnPropertyChanged(nameof(eta)); changed = true; }
 
-            var state = snap.Status switch
+            // 仅在状态真正变化时才重建 status/oper，避免每 500ms 触发全表刷新。
+            if (_lastStatus != snap.Status)
             {
-                Downloader.DownloadStatus.Completed => TState.Success,
-                Downloader.DownloadStatus.Failed => TState.Error,
-                Downloader.DownloadStatus.Running => TState.Processing,
-                Downloader.DownloadStatus.Paused => TState.Warn,
-                _ => TState.Default
-            };
-            status = new CellBadge(state);
-            changed = true;
+                _lastStatus = snap.Status;
 
-            oper = snap.Status switch
-            {
-                Downloader.DownloadStatus.Completed => new[] { new CellLink("view", "查看"), new CellLink("open", "打开"), new CellLink("del", "删除") },
-                Downloader.DownloadStatus.Running => new[] { new CellLink("pause", "暂停"), new CellLink("view", "查看"), new CellLink("del", "删除") },
-                Downloader.DownloadStatus.Paused => new[] { new CellLink("resume", "继续"), new CellLink("view", "查看"), new CellLink("del", "删除") },
-                _ => new[] { new CellLink("resume", "开始"), new CellLink("view", "查看"), new CellLink("del", "删除") }
-            };
+                var state = snap.Status switch
+                {
+                    Downloader.DownloadStatus.Completed => TState.Success,
+                    Downloader.DownloadStatus.Failed => TState.Error,
+                    Downloader.DownloadStatus.Running => TState.Processing,
+                    Downloader.DownloadStatus.Paused => TState.Warn,
+                    _ => TState.Default
+                };
+                status = new CellBadge(state);
+                OnPropertyChanged(nameof(status));
+
+                oper = snap.Status switch
+                {
+                    Downloader.DownloadStatus.Completed => new[] { new CellLink("view", "查看"), new CellLink("open", "打开"), new CellLink("del", "删除") },
+                    Downloader.DownloadStatus.Running => new[] { new CellLink("pause", "暂停"), new CellLink("view", "查看"), new CellLink("del", "删除") },
+                    Downloader.DownloadStatus.Paused => new[] { new CellLink("resume", "继续"), new CellLink("view", "查看"), new CellLink("del", "删除") },
+                    _ => new[] { new CellLink("resume", "开始"), new CellLink("view", "查看"), new CellLink("del", "删除") }
+                };
+                OnPropertyChanged(nameof(oper));
+
+                changed = true;
+            }
             return changed;
         }
     }

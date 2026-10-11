@@ -134,11 +134,15 @@ namespace MyDownloader.Classes
 
         private void EnqueueAndPump(string id)
         {
-            if (!_tasks.TryGetValue(id, out var h)) return;
-            // 重复入队防护：已在队列中则直接返回，避免重复创建 Service。
-            if (h.IsQueued) return;
-            h.IsQueued = true;
-            _queue.Enqueue(id);
+            // 检查与置位放入调度锁内，避免并发重复入队。
+            lock (_scheduleLock)
+            {
+                if (!_tasks.TryGetValue(id, out var h)) return;
+                // 重复入队防护：已在队列中则直接返回，避免重复创建 Service。
+                if (h.IsQueued) return;
+                h.IsQueued = true;
+                _queue.Enqueue(id);
+            }
             PumpQueue();
         }
 
@@ -193,8 +197,13 @@ namespace MyDownloader.Classes
                         remoteSize = -1;
                     }
 
+                    // 续传校验：本地文件长度必须足以支撑已记录的分块位置，且服务端大小一致，否则重下。
+                    var expectedLocal = package.Chunks?.Sum(c => c.Position) ?? 0;
                     var localExists = File.Exists(h.FilePath);
-                    if (!localExists || (remoteSize > 0 && remoteSize != package.TotalFileSize))
+                    long localLength = localExists ? new FileInfo(h.FilePath).Length : 0;
+                    if (!localExists
+                        || (remoteSize > 0 && remoteSize != package.TotalFileSize)
+                        || localLength < expectedLocal)
                     {
                         // 不可续传：清空分块，从头下载
                         package.Chunks = null;
