@@ -64,7 +64,7 @@ namespace MyDownloader.Classes
         {
             if (bytesPerSecond <= 0 || remainingBytes <= 0) return "--";
             var seconds = (long)(remainingBytes / bytesPerSecond);
-            if (seconds > 359999) return "--";
+            if (seconds <= 0 || seconds > 359999) return "--";
             return TimeSpan.FromSeconds(seconds).ToString(@"hh\:mm\:ss");
         }
     }

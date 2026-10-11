@@ -49,4 +49,11 @@ public class PathToolsTests
         Assert.Equal("--", PathTools.FormatEta(1000, 0));
         Assert.Equal("00:00:10", PathTools.FormatEta(1024 * 1024, 1024 * 1024 / 10));
     }
+
+    [Fact]
+    public void 格式化剩余时间_溢出或负值返回占位()
+    {
+        Assert.Equal("--", PathTools.FormatEta(long.MaxValue, 0.1));
+        Assert.Equal("--", PathTools.FormatEta(-5, 100));
+    }
 }
