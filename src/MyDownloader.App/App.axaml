@@ -2,8 +2,16 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="MyDownloader.App.App"
              RequestedThemeVariant="Light">
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceInclude Source="avares://MyDownloader.App/Styles/Theme.axaml" />
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </Application.Resources>
   <Application.Styles>
     <FluentTheme />
     <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
+    <StyleInclude Source="avares://MyDownloader.App/Styles/Controls.axaml" />
   </Application.Styles>
 </Application>

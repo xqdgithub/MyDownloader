@@ -3,24 +3,34 @@
         xmlns:vm="using:MyDownloader.App.ViewModels"
         x:Class="MyDownloader.App.Views.AddTaskWindow"
         x:DataType="vm:AddTaskViewModel"
-        Title="新建任务" Width="620" Height="240"
+        Title="新建下载" Icon="/Assets/app.ico"
+        Width="620" Height="300"
+        Background="{DynamicResource PageBgBrush}"
         WindowStartupLocation="CenterOwner">
-  <StackPanel Margin="16" Spacing="12">
-    <StackPanel Spacing="4">
-      <TextBlock Text="下载地址"/>
-      <TextBox Text="{Binding Url}" PlaceholderText="https://..."/>
+  <Border Classes="card" Margin="16">
+    <StackPanel Spacing="16">
+      <TextBlock Text="新建下载" Classes="cardtitle"/>
+
+      <StackPanel Spacing="6">
+        <TextBlock Text="下载地址" Classes="muted"/>
+        <TextBox Text="{Binding Url}" PlaceholderText="https://..." CornerRadius="8"/>
+      </StackPanel>
+
+      <StackPanel Spacing="6">
+        <TextBlock Text="保存路径" Classes="muted"/>
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBox Text="{Binding FilePath}" CornerRadius="8"/>
+          <Button Grid.Column="1" Classes="secondary" Content="浏览..." Name="BrowseButton" Margin="8,0,0,0"/>
+        </Grid>
+      </StackPanel>
+
+      <TextBlock Text="{Binding Error}" Foreground="{DynamicResource DangerBrush}"
+                 IsVisible="{Binding Error, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+        <Button Classes="secondary" Content="取消" Command="{Binding CancelCommand}"/>
+        <Button Classes="primary" Content="确定" Command="{Binding ConfirmCommand}"/>
+      </StackPanel>
     </StackPanel>
-    <StackPanel Spacing="4">
-      <TextBlock Text="保存路径"/>
-      <Grid ColumnDefinitions="*,Auto">
-        <TextBox Text="{Binding FilePath}"/>
-        <Button Grid.Column="1" Content="浏览..." Name="BrowseButton" Margin="8,0,0,0"/>
-      </Grid>
-    </StackPanel>
-    <TextBlock Text="{Binding Error}" Foreground="#D33" IsVisible="{Binding Error, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-      <Button Content="取消" Command="{Binding CancelCommand}"/>
-      <Button Content="确定" Classes="accent" Command="{Binding ConfirmCommand}"/>
-    </StackPanel>
-  </StackPanel>
+  </Border>
 </Window>

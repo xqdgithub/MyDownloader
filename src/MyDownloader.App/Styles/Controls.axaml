@@ -1,0 +1,82 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- 卡片容器 -->
+  <Style Selector="Border.card">
+    <Setter Property="Background" Value="{DynamicResource CardBgBrush}"/>
+    <Setter Property="CornerRadius" Value="{DynamicResource CardRadius}"/>
+    <Setter Property="BoxShadow" Value="{DynamicResource CardShadow}"/>
+    <Setter Property="Padding" Value="12"/>
+  </Style>
+
+  <!-- 主按钮（蓝色实心） -->
+  <Style Selector="Button.primary">
+    <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+    <Setter Property="Foreground" Value="White"/>
+    <Setter Property="CornerRadius" Value="{DynamicResource ButtonRadius}"/>
+    <Setter Property="Padding" Value="16,8"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="BorderThickness" Value="0"/>
+  </Style>
+  <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}"/>
+    <Setter Property="Foreground" Value="White"/>
+  </Style>
+  <Style Selector="Button.primary:pressed /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource PrimaryPressedBrush}"/>
+  </Style>
+
+  <!-- 次要按钮（描边） -->
+  <Style Selector="Button.secondary">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="{DynamicResource ButtonRadius}"/>
+    <Setter Property="Padding" Value="12,6"/>
+  </Style>
+  <Style Selector="Button.secondary:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource RowHoverBrush}"/>
+  </Style>
+
+  <!-- 行内小操作按钮 -->
+  <Style Selector="Button.rowaction">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="Padding" Value="6,2"/>
+    <Setter Property="FontSize" Value="12"/>
+    <Setter Property="CornerRadius" Value="6"/>
+  </Style>
+  <Style Selector="Button.rowaction:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource RowHoverBrush}"/>
+  </Style>
+
+  <!-- 状态胶囊标签 -->
+  <Style Selector="Border.pill">
+    <Setter Property="CornerRadius" Value="999"/>
+    <Setter Property="Padding" Value="8,2"/>
+    <Setter Property="HorizontalAlignment" Value="Center"/>
+    <Setter Property="VerticalAlignment" Value="Center"/>
+  </Style>
+
+  <!-- 卡片标题 -->
+  <Style Selector="TextBlock.cardtitle">
+    <Setter Property="FontSize" Value="18"/>
+    <Setter Property="FontWeight" Value="Bold"/>
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+  </Style>
+
+  <!-- 次要文本 -->
+  <Style Selector="TextBlock.muted">
+    <Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/>
+    <Setter Property="FontSize" Value="12"/>
+  </Style>
+
+  <!-- 进度条统一为蓝色渐变 -->
+  <Style Selector="ProgressBar">
+    <Setter Property="Foreground" Value="{DynamicResource ProgressGradient}"/>
+    <Setter Property="CornerRadius" Value="6"/>
+    <Setter Property="MinHeight" Value="10"/>
+  </Style>
+</Styles>

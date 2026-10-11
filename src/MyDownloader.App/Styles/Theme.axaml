@@ -1,0 +1,47 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <ResourceDictionary.ThemeDictionaries>
+    <!-- 浅色 -->
+    <ResourceDictionary x:Key="Light">
+      <SolidColorBrush x:Key="PrimaryBrush" Color="#1677FF"/>
+      <SolidColorBrush x:Key="PrimaryHoverBrush" Color="#4096FF"/>
+      <SolidColorBrush x:Key="PrimaryPressedBrush" Color="#0958D9"/>
+      <SolidColorBrush x:Key="SuccessBrush" Color="#52C41A"/>
+      <SolidColorBrush x:Key="WarningBrush" Color="#FAAD14"/>
+      <SolidColorBrush x:Key="DangerBrush" Color="#FF4D4F"/>
+      <SolidColorBrush x:Key="MutedBrush" Color="#8C8C8C"/>
+      <SolidColorBrush x:Key="PageBgBrush" Color="#F5F7FA"/>
+      <SolidColorBrush x:Key="CardBgBrush" Color="#FFFFFF"/>
+      <SolidColorBrush x:Key="TextPrimaryBrush" Color="#1F1F1F"/>
+      <SolidColorBrush x:Key="BorderBrush" Color="#EBEEF5"/>
+      <SolidColorBrush x:Key="RowHoverBrush" Color="#F0F7FF"/>
+      <SolidColorBrush x:Key="StatusWaitingBrush" Color="#8C8C8C"/>
+    </ResourceDictionary>
+    <!-- 深色 -->
+    <ResourceDictionary x:Key="Dark">
+      <SolidColorBrush x:Key="PrimaryBrush" Color="#1677FF"/>
+      <SolidColorBrush x:Key="PrimaryHoverBrush" Color="#4096FF"/>
+      <SolidColorBrush x:Key="PrimaryPressedBrush" Color="#0958D9"/>
+      <SolidColorBrush x:Key="SuccessBrush" Color="#52C41A"/>
+      <SolidColorBrush x:Key="WarningBrush" Color="#FAAD14"/>
+      <SolidColorBrush x:Key="DangerBrush" Color="#FF4D4F"/>
+      <SolidColorBrush x:Key="MutedBrush" Color="#9A9A9A"/>
+      <SolidColorBrush x:Key="PageBgBrush" Color="#141414"/>
+      <SolidColorBrush x:Key="CardBgBrush" Color="#1F1F1F"/>
+      <SolidColorBrush x:Key="TextPrimaryBrush" Color="#E6E6E6"/>
+      <SolidColorBrush x:Key="BorderBrush" Color="#303030"/>
+      <SolidColorBrush x:Key="RowHoverBrush" Color="#11233D"/>
+      <SolidColorBrush x:Key="StatusWaitingBrush" Color="#8C8C8C"/>
+    </ResourceDictionary>
+  </ResourceDictionary.ThemeDictionaries>
+
+  <!-- 主题无关资源 -->
+  <LinearGradientBrush x:Key="ProgressGradient" StartPoint="0%,0%" EndPoint="100%,0%">
+    <GradientStop Color="#69B1FF" Offset="0"/>
+    <GradientStop Color="#1677FF" Offset="1"/>
+  </LinearGradientBrush>
+
+  <BoxShadows x:Key="CardShadow">0 2 8 0 #0F000000</BoxShadows>
+  <CornerRadius x:Key="CardRadius">10</CornerRadius>
+  <CornerRadius x:Key="ButtonRadius">8</CornerRadius>
+</ResourceDictionary>

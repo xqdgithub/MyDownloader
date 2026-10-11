@@ -3,79 +3,131 @@
         xmlns:vm="using:MyDownloader.App.ViewModels"
         x:Class="MyDownloader.App.Views.MainWindow"
         x:DataType="vm:MainViewModel"
-        Title="MyDownloader" Icon="/Assets/app.ico" Width="980" Height="600" MinWidth="720" MinHeight="420"
+        Title="MyDownloader" Icon="/Assets/app.ico"
+        Width="980" Height="620" MinWidth="760" MinHeight="460"
+        Background="{DynamicResource PageBgBrush}"
         DragDrop.AllowDrop="True">
-  <DockPanel>
-    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="12">
-      <Button Content="+ 添加任务" Classes="accent" Name="AddButton"/>
-      <Button Content="暂停全部" Command="{Binding PauseAllCommand}"/>
-      <Button Content="继续全部" Command="{Binding ResumeAllCommand}"/>
-      <Button Content="主题" Name="ThemeButton"/>
-    </StackPanel>
+  <Window.Styles>
+    <Style Selector="DataGridRow">
+      <Setter Property="Background" Value="Transparent"/>
+    </Style>
+    <Style Selector="DataGridRow:pointerover /template/ Rectangle#BackgroundRectangle">
+      <Setter Property="Fill" Value="{DynamicResource RowHoverBrush}"/>
+    </Style>
+    <Style Selector="DataGridColumnHeader">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="FontSize" Value="12"/>
+    </Style>
+  </Window.Styles>
 
-    <Border DockPanel.Dock="Bottom" Background="#F5F5F5" Padding="12,6">
-      <StackPanel Orientation="Horizontal" Spacing="24">
-        <TextBlock Text="{Binding TotalSpeedText, StringFormat='总速度: {0}'}"/>
-        <TextBlock Text="{Binding ActiveCount, StringFormat='活动任务: {0}'}"/>
-        <TextBlock Text="{Binding CompletedCount, StringFormat='已完成: {0}'}"/>
+  <DockPanel Margin="14" LastChildFill="True">
+
+    <!-- 顶部卡片工具栏 -->
+    <Border DockPanel.Dock="Top" Classes="card" Padding="12" Margin="0,0,0,12">
+      <Grid ColumnDefinitions="Auto,*,Auto">
+        <Button Grid.Column="0" Name="AddButton" Classes="primary" Content="+  新建下载"/>
+        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+          <Button Name="PauseAllButton" Classes="secondary" Content="暂停全部"
+                  Command="{Binding PauseAllCommand}" ToolTip.Tip="暂停所有下载任务"/>
+          <Button Name="ResumeAllButton" Classes="secondary" Content="继续全部"
+                  Command="{Binding ResumeAllCommand}" ToolTip.Tip="继续所有已暂停任务"/>
+          <Button Name="ThemeButton" Classes="secondary" Content="主题"
+                  ToolTip.Tip="切换浅色 / 深色"/>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- 底部状态栏卡片 -->
+    <Border DockPanel.Dock="Bottom" Classes="card" Padding="12,8" Margin="0,12,0,0">
+      <StackPanel Orientation="Horizontal" Spacing="28">
+        <TextBlock Classes="muted" Text="{Binding TotalSpeedText, StringFormat='总速度  {0}'}"/>
+        <TextBlock Classes="muted" Text="{Binding ActiveCount, StringFormat='活动任务  {0}'}"/>
+        <TextBlock Classes="muted" Text="{Binding CompletedCount, StringFormat='已完成  {0}'}"/>
       </StackPanel>
     </Border>
 
-    <DataGrid ItemsSource="{Binding Items}"
-              SelectedItem="{Binding SelectedItem}"
-              AutoGenerateColumns="False"
-              IsReadOnly="True"
-              GridLinesVisibility="Horizontal"
-              CanUserResizeColumns="True"
-              DoubleTapped="OnRowDoubleTapped"
-              Name="TaskGrid">
-      <DataGrid.Columns>
-        <DataGridTemplateColumn Header="文件名" Width="*">
-          <DataGridTemplateColumn.CellTemplate>
-            <DataTemplate x:DataType="vm:TaskItemViewModel">
-              <TextBlock Text="{Binding FileName}" VerticalAlignment="Center"/>
-            </DataTemplate>
-          </DataGridTemplateColumn.CellTemplate>
-        </DataGridTemplateColumn>
-        <DataGridTextColumn Header="大小" Binding="{Binding SizeText}" Width="110"/>
-        <DataGridTemplateColumn Header="进度" Width="180">
-          <DataGridTemplateColumn.CellTemplate>
-            <DataTemplate x:DataType="vm:TaskItemViewModel">
-              <ProgressBar Value="{Binding Progress}" Minimum="0" Maximum="100"
-                           Height="14" VerticalAlignment="Center"/>
-            </DataTemplate>
-          </DataGridTemplateColumn.CellTemplate>
-        </DataGridTemplateColumn>
-        <DataGridTextColumn Header="速度" Binding="{Binding SpeedText}" Width="100"/>
-        <DataGridTextColumn Header="剩余" Binding="{Binding EtaText}" Width="90"/>
-        <DataGridTextColumn Header="状态" Binding="{Binding StatusText}" Width="90"/>
-        <DataGridTemplateColumn Header="操作" Width="260">
-          <DataGridTemplateColumn.CellTemplate>
-            <DataTemplate x:DataType="vm:TaskItemViewModel">
-              <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                <Button Content="暂停" FontSize="12" Padding="6,2"
-                        IsVisible="{Binding CanPause}"
-                        Command="{Binding $parent[DataGrid].((vm:MainViewModel)DataContext).PauseItemCommand}"
-                        CommandParameter="{Binding}"/>
-                <Button Content="继续" FontSize="12" Padding="6,2"
-                        IsVisible="{Binding CanResume}"
-                        Command="{Binding $parent[DataGrid].((vm:MainViewModel)DataContext).ResumeItemCommand}"
-                        CommandParameter="{Binding}"/>
-                <Button Content="查看" FontSize="12" Padding="6,2"
-                        Command="{Binding $parent[DataGrid].((vm:MainViewModel)DataContext).ViewDetailCommand}"
-                        CommandParameter="{Binding}"/>
-                <Button Content="打开" FontSize="12" Padding="6,2"
-                        IsVisible="{Binding CanOpen}"
-                        Command="{Binding $parent[DataGrid].((vm:MainViewModel)DataContext).OpenItemCommand}"
-                        CommandParameter="{Binding}"/>
-                <Button Content="删除" FontSize="12" Padding="6,2"
-                        Command="{Binding $parent[DataGrid].((vm:MainViewModel)DataContext).RemoveItemCommand}"
-                        CommandParameter="{Binding}"/>
-              </StackPanel>
-            </DataTemplate>
-          </DataGridTemplateColumn.CellTemplate>
-        </DataGridTemplateColumn>
-      </DataGrid.Columns>
-    </DataGrid>
+    <!-- 任务列表卡片 -->
+    <Border Classes="card" Padding="0">
+      <Grid>
+        <DataGrid ItemsSource="{Binding Items}"
+                  SelectedItem="{Binding SelectedItem}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  GridLinesVisibility="None"
+                  HeadersVisibility="Column"
+                  CanUserResizeColumns="True"
+                  DoubleTapped="OnRowDoubleTapped"
+                  Background="Transparent"
+                  Name="TaskGrid">
+          <DataGrid.Columns>
+            <DataGridTemplateColumn Header="文件名" Width="*">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate x:DataType="vm:TaskItemViewModel">
+                  <TextBlock Text="{Binding FileName}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+            <DataGridTextColumn Header="大小" Binding="{Binding SizeText}" Width="110"/>
+            <DataGridTemplateColumn Header="进度" Width="190">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate x:DataType="vm:TaskItemViewModel">
+                  <ProgressBar Value="{Binding Progress}" Minimum="0" Maximum="100"
+                               Height="12" VerticalAlignment="Center" CornerRadius="6"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+            <DataGridTextColumn Header="速度" Binding="{Binding SpeedText}" Width="100"/>
+            <DataGridTextColumn Header="剩余" Binding="{Binding EtaText}" Width="90"/>
+            <DataGridTemplateColumn Header="状态" Width="96">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate x:DataType="vm:TaskItemViewModel">
+                  <Border Classes="pill" Background="{Binding StatusBrush}">
+                    <TextBlock Text="{Binding StatusText}" Foreground="White" FontSize="12"/>
+                  </Border>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+            <DataGridTemplateColumn Header="操作" Width="250">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate x:DataType="vm:TaskItemViewModel">
+                  <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center"
+                              Opacity="{Binding $parent[DataGridRow].IsPointerOver, Converter={x:Static vm:Converters.BoolToOpacity}}">
+                    <Button Classes="rowaction" Content="暂停" IsVisible="{Binding CanPause}"
+                            Command="{Binding $parent[DataGrid].((vm:MainViewModel)DataContext).PauseItemCommand}"
+                            CommandParameter="{Binding}"/>
+                    <Button Classes="rowaction" Content="继续" IsVisible="{Binding CanResume}"
+                            Command="{Binding $parent[DataGrid].((vm:MainViewModel)DataContext).ResumeItemCommand}"
+                            CommandParameter="{Binding}"/>
+                    <Button Classes="rowaction" Content="查看"
+                            Command="{Binding $parent[DataGrid].((vm:MainViewModel)DataContext).ViewDetailCommand}"
+                            CommandParameter="{Binding}"/>
+                    <Button Classes="rowaction" Content="打开" IsVisible="{Binding CanOpen}"
+                            Command="{Binding $parent[DataGrid].((vm:MainViewModel)DataContext).OpenItemCommand}"
+                            CommandParameter="{Binding}"/>
+                    <Button Classes="rowaction" Content="删除"
+                            Command="{Binding $parent[DataGrid].((vm:MainViewModel)DataContext).RemoveItemCommand}"
+                            CommandParameter="{Binding}"/>
+                  </StackPanel>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+          </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- 空列表占位 -->
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10"
+                    IsVisible="{Binding !Items.Count}"
+                    IsHitTestVisible="False">
+          <TextBlock Text="↓" FontSize="48" Foreground="{DynamicResource PrimaryBrush}"
+                     HorizontalAlignment="Center"/>
+          <TextBlock Text="暂无下载任务" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"
+                     HorizontalAlignment="Center"/>
+          <TextBlock Classes="muted" Text="点击左上角「新建下载」开始，或把链接拖到窗口"
+                     HorizontalAlignment="Center"/>
+        </StackPanel>
+      </Grid>
+    </Border>
   </DockPanel>
 </Window>
