@@ -17,6 +17,12 @@ namespace MyDownloader.Classes
         private readonly ConcurrentQueue<string> _queue = new();
         private readonly object _dbLock = new();
 
+        /// <summary>串行化"检查活动数 + 出队 + 启动"，避免并发调用 PumpQueue 突破并发上限。</summary>
+        private readonly object _scheduleLock = new();
+
+        /// <summary>当前占用的活动槽位（显式计数，不依赖库状态，避免库重置状态导致计数失真）。</summary>
+        private int _activeCount;
+
         private readonly IDataProvider _mainProvider;
         private readonly IDataProvider _settingProvider;
         private AppSettings _settings;
@@ -128,29 +134,35 @@ namespace MyDownloader.Classes
 
         private void EnqueueAndPump(string id)
         {
-            if (_tasks.TryGetValue(id, out var h)) h.IsQueued = true;
+            if (!_tasks.TryGetValue(id, out var h)) return;
+            // 重复入队防护：已在队列中则直接返回，避免重复创建 Service。
+            if (h.IsQueued) return;
+            h.IsQueued = true;
             _queue.Enqueue(id);
             PumpQueue();
         }
 
         private void PumpQueue()
         {
-            while (CountActive() < ConstData.MaxConcurrentDownloads && _queue.TryDequeue(out var id))
+            // 整体串行化：检查活动槽位、出队、启动必须原子，防止多线程并发突破上限。
+            lock (_scheduleLock)
             {
-                if (!_tasks.TryGetValue(id, out var h)) continue;
-                h.IsQueued = false;
-                StartHandle(h);
+                while (_activeCount < ConstData.MaxConcurrentDownloads && _queue.TryDequeue(out var id))
+                {
+                    if (!_tasks.TryGetValue(id, out var h)) continue;
+                    h.IsQueued = false;
+                    StartHandle(h);
+                }
             }
         }
 
-        private int CountActive()
-            => _tasks.Values.Count(h => h.Info.DownloadPackage?.Status == DownloadStatus.Running);
-
         private void StartHandle(TaskHandle h)
         {
+            // 占用一个活动槽位（在 _scheduleLock 内调用，计数与判断保持原子）。
+            Interlocked.Increment(ref _activeCount);
+
             h.Service = new DownloadService(DownloadConfigFactory.Create(_settings.UseSystemProxy));
             h.Service.DownloadProgressChanged += (_, e) => OnProgress(h, e);
-            h.Service.ChunkDownloadProgressChanged += (_, e) => OnProgress(h, e);
             h.Service.DownloadFileCompleted += (_, e) => OnCompleted(h, e);
 
             if (h.Info.DownloadPackage?.Chunks is not { Length: > 0 })
@@ -186,6 +198,8 @@ namespace MyDownloader.Classes
             }
             finally
             {
+                // 释放活动槽位（与 StartHandle 的 Increment 配对）。
+                Interlocked.Decrement(ref _activeCount);
                 Persist();
                 TaskUpdated?.Invoke(this, h.Id);
                 if (h.Info.DownloadPackage?.Status is DownloadStatus.Completed or DownloadStatus.Failed)
@@ -196,15 +210,31 @@ namespace MyDownloader.Classes
 
         private void OnProgress(TaskHandle h, DownloadProgressChangedEventArgs e)
         {
+            // 进度数值每次都更新（供快照读取最新值）。
             h.ReceivedBytes = e.ReceivedBytesSize;
             h.TotalBytes = e.TotalBytesToReceive;
             h.SpeedBytesPerSecond = e.AverageBytesPerSecondSpeed;
             ThrottledPersist();
+
+            // 通知节流：距上次通知不足 200ms 则跳过，避免事件风暴。
+            lock (h.NotifyLock)
+            {
+                var now = DateTime.Now;
+                if ((now - h.LastNotify).TotalMilliseconds < 200) return;
+                h.LastNotify = now;
+            }
             TaskUpdated?.Invoke(this, h.Id);
         }
 
         private void OnCompleted(TaskHandle h, System.ComponentModel.AsyncCompletedEventArgs e)
         {
+            // 库失败时不重抛异常，错误信息只能从 e.Error 读取。
+            if (e.Error != null)
+            {
+                h.ErrorMessage = e.Error.Message;
+                if (h.Info.DownloadPackage?.Status != DownloadStatus.Completed)
+                    h.Info.DownloadPackage!.Status = DownloadStatus.Failed;
+            }
             TaskUpdated?.Invoke(this, h.Id);
         }
 
@@ -251,6 +281,7 @@ namespace MyDownloader.Classes
             if (_tasks.TryRemove(id, out var h))
             {
                 h.Service?.CancelAsync();
+                try { h.Service?.Dispose(); } catch { /* 忽略与运行中 RunAsync 的竞争 */ }
                 Persist();
             }
         }
@@ -273,6 +304,7 @@ namespace MyDownloader.Classes
             foreach (var h in _tasks.Values)
             {
                 try { h.Service?.CancelAsync(); } catch { /* 忽略 */ }
+                try { h.Service?.Dispose(); } catch { /* 忽略与运行中 RunAsync 的竞争 */ }
             }
             Persist();
         }
@@ -283,9 +315,12 @@ namespace MyDownloader.Classes
 
         private void ThrottledPersist()
         {
-            var now = DateTime.Now;
-            if ((now - _lastPersist).TotalSeconds < 2) return;
-            _lastPersist = now;
+            lock (_dbLock)
+            {
+                var now = DateTime.Now;
+                if ((now - _lastPersist).TotalSeconds < 2) return;
+                _lastPersist = now;
+            }
             Persist();
         }
 

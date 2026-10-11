@@ -21,5 +21,11 @@ namespace MyDownloader.Classes
 
         /// <summary>是否已入队等待调度。</summary>
         public bool IsQueued;
+
+        /// <summary>上次触发 TaskUpdated 的时间（用于进度事件节流）。</summary>
+        public DateTime LastNotify;
+
+        /// <summary>保护 LastNotify 的专用锁。</summary>
+        public readonly object NotifyLock = new();
     }
 }
