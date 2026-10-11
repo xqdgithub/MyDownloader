@@ -18,8 +18,18 @@ namespace MyDownloader.App.Services
             Dispatcher.UIThread.Post(() =>
             {
                 var text = new StackPanel { Spacing = 4 };
-                text.Children.Add(new TextBlock { Text = title, FontWeight = FontWeight.Bold });
-                text.Children.Add(new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, Opacity = 0.85 });
+                text.Children.Add(new TextBlock
+                {
+                    Text = title,
+                    FontWeight = FontWeight.Bold,
+                    Foreground = Brushes.White
+                });
+                text.Children.Add(new TextBlock
+                {
+                    Text = message,
+                    TextWrapping = TextWrapping.Wrap,
+                    Foreground = new SolidColorBrush(Color.FromArgb(220, 255, 255, 255))
+                });
 
                 var win = new Window
                 {

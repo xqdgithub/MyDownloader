@@ -280,6 +280,15 @@ namespace MyDownloader.Core
 
         private void OnCompleted(TaskHandle h, System.ComponentModel.AsyncCompletedEventArgs e)
         {
+            // 取消时库也会带上 OperationCanceledException，此时 e.Cancelled=true，不算失败。
+            if (e.Cancelled)
+            {
+                if (h.Info.DownloadPackage != null)
+                    h.Info.DownloadPackage.Status = DownloadStatus.Stopped;
+                TaskUpdated?.Invoke(this, h.Id);
+                return;
+            }
+
             // 库失败时不重抛异常，错误信息只能从 e.Error 读取。
             if (e.Error != null)
             {
