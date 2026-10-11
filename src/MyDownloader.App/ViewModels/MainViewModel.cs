@@ -60,6 +60,13 @@ namespace MyDownloader.App.ViewModels
         [RelayCommand] private void PauseAll() => _manager.PauseAll();
         [RelayCommand] private void ResumeAll() => _manager.ResumeAll();
 
+        /// <summary>新增任务并立即刷新列表。</summary>
+        public void AddTask(string url, string path)
+        {
+            _manager.AddTask(url, path);
+            Refresh();
+        }
+
         /// <summary>由 View 注入：打开添加对话框，返回 (url, path) 或 null。</summary>
         public Func<string?, Task<(string url, string path)?>>? RequestAddTask;
 

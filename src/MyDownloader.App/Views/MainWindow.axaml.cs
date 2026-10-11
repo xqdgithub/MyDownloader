@@ -21,13 +21,20 @@ namespace MyDownloader.App.Views
             if (theme != null) theme.Click += (_, _) => ThemeService.Toggle();
 
             var add = this.FindControl<Button>("AddButton");
-            if (add != null) add.Click += (_, _) => _ = ShowAddTaskAsync(null);
+            if (add != null) add.Click += (_, _) => _ = AddFromDialogAsync(null);
 
             AddHandler(DragDrop.DropEvent, OnDrop);
             AddHandler(DragDrop.DragOverEvent, OnDragOver);
         }
 
-        public void PromptAddUrl(string url) => _ = ShowAddTaskAsync(url);
+        public void PromptAddUrl(string url) => _ = AddFromDialogAsync(url);
+
+        /// <summary>弹添加对话框，确认后把任务交给引擎。</summary>
+        private async Task AddFromDialogAsync(string? url)
+        {
+            var result = await ShowAddTaskAsync(url);
+            if (result is { } r) _vm.AddTask(r.url, r.path);
+        }
 
         private async Task<(string url, string path)?> ShowAddTaskAsync(string? url)
         {
@@ -58,7 +65,7 @@ namespace MyDownloader.App.Views
             var text = e.DataTransfer.TryGetText();
             if (!string.IsNullOrWhiteSpace(text) && text.Trim().StartsWith("http"))
             {
-                _ = ShowAddTaskAsync(text.Trim());
+                _ = AddFromDialogAsync(text.Trim());
             }
         }
     }
