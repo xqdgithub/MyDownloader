@@ -58,6 +58,29 @@ namespace MyDownloader.Core
         }
 
         /// <summary>
+        /// 格式化为可读体积（自动单位）；0 返回 "0 B"。
+        /// </summary>
+        public static string FormatSize(long bytes)
+        {
+            if (bytes <= 0) return "0 B";
+            double v = bytes;
+            string unit;
+            if (v >= 1024 * 1024 * 1024) { v /= 1024 * 1024 * 1024; unit = "GB"; }
+            else if (v >= 1024 * 1024) { v /= 1024 * 1024; unit = "MB"; }
+            else if (v >= 1024) { v /= 1024; unit = "KB"; }
+            else { unit = "B"; }
+            return $"{v.ToString("#0.00")} {unit}";
+        }
+
+        /// <summary>
+        /// 格式化为"已下载 / 总量"的汇总文本。
+        /// </summary>
+        public static string FormatOverview(long receivedBytes, long totalBytes)
+        {
+            return $"{FormatSize(receivedBytes)} / {FormatSize(totalBytes)}";
+        }
+
+        /// <summary>
         /// 根据剩余字节与速度计算 ETA；速度为 0 或负时返回 "--"。
         /// </summary>
         public static string FormatEta(long remainingBytes, double bytesPerSecond)

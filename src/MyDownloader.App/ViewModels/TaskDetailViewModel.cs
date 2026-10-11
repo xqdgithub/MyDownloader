@@ -20,6 +20,7 @@ namespace MyDownloader.App.ViewModels
         [ObservableProperty] private string _url = string.Empty;
         [ObservableProperty] private string _filePath = string.Empty;
         [ObservableProperty] private double _progress;
+        [ObservableProperty] private string _progressText = "0%";
         [ObservableProperty] private string _speedText = string.Empty;
         [ObservableProperty] private string _overviewText = string.Empty;
         [ObservableProperty] private string _etaText = string.Empty;
@@ -50,9 +51,10 @@ namespace MyDownloader.App.ViewModels
             Url = snap.Url ?? string.Empty;
             FilePath = snap.FilePath;
             Progress = snap.Progress;
+            ProgressText = $"{snap.Progress:0}%";
             SpeedText = snap.SpeedText;
             EtaText = snap.Eta;
-            OverviewText = $"{snap.ReceivedBytes}/{snap.TotalBytes}";
+            OverviewText = PathTools.FormatOverview(snap.ReceivedBytes, snap.TotalBytes);
             StatusText = snap.Status switch
             {
                 DownloadStatus.Completed => "已完成",

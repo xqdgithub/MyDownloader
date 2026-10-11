@@ -70,11 +70,15 @@
               </DataGridTemplateColumn.CellTemplate>
             </DataGridTemplateColumn>
             <DataGridTextColumn Header="大小" Binding="{Binding SizeText}" Width="110"/>
-            <DataGridTemplateColumn Header="进度" Width="190">
+            <DataGridTemplateColumn Header="进度" Width="220">
               <DataGridTemplateColumn.CellTemplate>
                 <DataTemplate x:DataType="vm:TaskItemViewModel">
-                  <ProgressBar Value="{Binding Progress}" Minimum="0" Maximum="100"
-                               Height="12" VerticalAlignment="Center" CornerRadius="6"/>
+                  <Grid ColumnDefinitions="*,48" VerticalAlignment="Center">
+                    <ProgressBar Value="{Binding Progress}" Minimum="0" Maximum="100"
+                                 Height="12" VerticalAlignment="Center" CornerRadius="6"/>
+                    <TextBlock Grid.Column="1" Text="{Binding ProgressText}" Classes="muted"
+                               VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                  </Grid>
                 </DataTemplate>
               </DataGridTemplateColumn.CellTemplate>
             </DataGridTemplateColumn>
@@ -93,22 +97,22 @@
               <DataGridTemplateColumn.CellTemplate>
                 <DataTemplate x:DataType="vm:TaskItemViewModel">
                   <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                    <Button Classes="rowaction" Content="暂停" IsEnabled="{Binding CanPause}"
+                    <Button Classes="rowaction" Content="暂停" IsVisible="{Binding CanPause}"
                             Command="{Binding $parent[DataGrid].((vm:MainViewModel)DataContext).PauseItemCommand}"
                             CommandParameter="{Binding}"/>
-                    <Button Classes="rowaction" Content="{Binding ResumeText}" IsEnabled="{Binding CanResume}"
+                    <Button Classes="rowaction" Content="{Binding ResumeText}" IsVisible="{Binding CanResume}"
                             Command="{Binding $parent[DataGrid].((vm:MainViewModel)DataContext).ResumeItemCommand}"
                             CommandParameter="{Binding}"/>
-                    <Button Classes="rowaction" Content="取消" IsEnabled="{Binding CanCancel}"
+                    <Button Classes="rowaction" Content="取消" IsVisible="{Binding CanCancel}"
                             Command="{Binding $parent[DataGrid].((vm:MainViewModel)DataContext).CancelItemCommand}"
                             CommandParameter="{Binding}"/>
                     <Button Classes="rowaction" Content="查看"
                             Command="{Binding $parent[DataGrid].((vm:MainViewModel)DataContext).ViewDetailCommand}"
                             CommandParameter="{Binding}"/>
-                    <Button Classes="rowaction" Content="打开" IsEnabled="{Binding CanOpen}"
+                    <Button Classes="rowaction" Content="打开" IsVisible="{Binding CanOpen}"
                             Command="{Binding $parent[DataGrid].((vm:MainViewModel)DataContext).OpenItemCommand}"
                             CommandParameter="{Binding}"/>
-                    <Button Classes="rowaction" Content="重下" IsEnabled="{Binding CanRedownload}"
+                    <Button Classes="rowaction" Content="重下" IsVisible="{Binding CanRedownload}"
                             Command="{Binding $parent[DataGrid].((vm:MainViewModel)DataContext).RedownloadItemCommand}"
                             CommandParameter="{Binding}"/>
                     <Button Classes="rowaction" Content="删除"

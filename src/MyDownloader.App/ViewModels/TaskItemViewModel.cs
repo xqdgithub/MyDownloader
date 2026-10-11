@@ -14,6 +14,7 @@ namespace MyDownloader.App.ViewModels
         [ObservableProperty] private string _fileName = string.Empty;
         [ObservableProperty] private string _sizeText = string.Empty;
         [ObservableProperty] private double _progress;
+        [ObservableProperty] private string _progressText = "0%";
         [ObservableProperty] private string _speedText = string.Empty;
         [ObservableProperty] private string _etaText = string.Empty;
         [ObservableProperty] private string _statusText = string.Empty;
@@ -50,9 +51,9 @@ namespace MyDownloader.App.ViewModels
         public void Apply(TaskSnapshot snap)
         {
             FileName = snap.FileName;
-            var size = DownloadTools.FitByteUnit(snap.TotalBytes, out string unit);
-            SizeText = $"{size:0.00}{unit}";
+            SizeText = PathTools.FormatSize(snap.TotalBytes);
             Progress = snap.Progress;
+            ProgressText = $"{snap.Progress:0}%";
             SpeedText = snap.SpeedText;
             EtaText = snap.Eta;
             Status = snap.Status;
