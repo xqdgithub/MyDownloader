@@ -165,6 +165,7 @@ Program.Main
 - `DownloadFileTaskAsync(package, urls)` 接受已有 package；库在 `ChunkHub.SetFileChunks` 检测到 `Chunks != null` 即 `package.Validate()` 复用已有位置（`ChunkHub.cs:42-45`），未完成分块从 `Position` 继续。
 - 续传必须走 `DownloadFileTaskAsync(package, urls)` 重载，**不得**走 `DownloadFileTaskAsync(fileName)`（后者会 `File.Delete` 已存在文件，`AbstractDownloadService.cs:363-381`）。
 - 续传前校验：若服务端 `TotalFileSize` 与持久化值不一致，或本地文件缺失，则判定不可续传并重下（避免错位拼接）。
+  - 注意：`DownloadService.StartDownload` 会先用服务端值覆盖 `Package.TotalFileSize`（`DownloadService.cs:37`），故该比对必须在调用 `DownloadFileTaskAsync(package, urls)` **之前**自行发起 HEAD/`GetFileSize` 完成，不能依赖库内自动比对。
 
 **恢复时机**
 - 启动时加载任务列表，对未完成状态（`Created`/`None`/`Running`/`Stopped`/`Paused`）标记为"已暂停"，不自动开跑。
