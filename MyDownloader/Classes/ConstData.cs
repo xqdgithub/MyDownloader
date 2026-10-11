@@ -1,16 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace MyDownloader.Classes
+﻿namespace MyDownloader.Classes
 {
     public static class ConstData
     {
-        public const string DownloadMainDB = "./DownloadMainDB.db";
-        public const string DownloadSettingDB = "./DownloadSettingDB.db";
+        /// <summary>数据目录（%LocalAppData%\MyDownloader）。</summary>
+        public static string DataDir =>
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MyDownloader");
+
+        public static string DownloadMainDB => Path.Combine(DataDir, "DownloadMainDB.db");
+        public static string DownloadSettingDB => Path.Combine(DataDir, "DownloadSettingDB.db");
 
         public const string DownloadTaskInfoList = "DownloadTaskInfoList";
+        public const string AppSettings = "AppSettings";
+
+        /// <summary>并发下载上限。</summary>
+        public const int MaxConcurrentDownloads = 3;
     }
 }
