@@ -17,6 +17,9 @@ namespace MyDownloader.Core
         public DownloadStatus Status { get; init; }
         public string? ErrorMessage { get; init; }
 
+        /// <summary>分块进度快照（按 Index 排序）。</summary>
+        public IReadOnlyList<ChunkSnapshot> ChunkSnapshots { get; init; } = Array.Empty<ChunkSnapshot>();
+
         /// <summary>进度百分比（0-100）。</summary>
         public double Progress => TotalBytes <= 0 ? 0 : Math.Min(100, ReceivedBytes * 100.0 / TotalBytes);
 

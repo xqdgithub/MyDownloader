@@ -55,8 +55,8 @@ namespace MyDownloader.Core
             foreach (var dto in dtos)
             {
                 var package = dto.ToPackage();
-                if (package.Status is DownloadStatus.Running
-                    or DownloadStatus.Paused or DownloadStatus.Stopped or DownloadStatus.Created)
+                // Running/Created 视为暂停；Stopped（取消）保持 Stopped，不参与 ResumeAll 自动恢复。
+                if (package.Status is DownloadStatus.Running or DownloadStatus.Created)
                 {
                     package.Status = DownloadStatus.Paused;
                 }
@@ -93,6 +93,17 @@ namespace MyDownloader.Core
         private static TaskSnapshot BuildSnapshot(TaskHandle h)
         {
             var package = h.Info.DownloadPackage;
+            var chunks = package?.Chunks;
+            var chunkSnapshots = chunks == null
+                ? Array.Empty<ChunkSnapshot>()
+                : chunks.Select((c, i) => new ChunkSnapshot
+                {
+                    Index = i,
+                    Start = c.Start,
+                    End = c.End,
+                    Position = c.Position
+                }).ToArray();
+
             return new TaskSnapshot
             {
                 Id = h.Id,
@@ -103,7 +114,8 @@ namespace MyDownloader.Core
                 ReceivedBytes = h.ReceivedBytes,
                 SpeedBytesPerSecond = h.SpeedBytesPerSecond,
                 Status = package?.Status ?? DownloadStatus.None,
-                ErrorMessage = h.ErrorMessage
+                ErrorMessage = h.ErrorMessage,
+                ChunkSnapshots = chunkSnapshots
             };
         }
 
@@ -285,17 +297,28 @@ namespace MyDownloader.Core
         public void Resume(string id)
         {
             if (!_tasks.TryGetValue(id, out var h)) return;
+
+            // Service 为空（尚未启动或已释放）：重新入队，基于持久化分块续传。
             if (h.Service == null)
             {
                 EnqueueAndPump(id);
                 return;
             }
-            if (h.Info.DownloadPackage?.Status == DownloadStatus.Paused)
+
+            var status = h.Info.DownloadPackage?.Status;
+            if (status == DownloadStatus.Paused)
             {
                 h.Service.Resume();
-                h.Info.DownloadPackage.Status = DownloadStatus.Running;
+                h.Info.DownloadPackage!.Status = DownloadStatus.Running;
                 Persist();
                 TaskUpdated?.Invoke(this, id);
+            }
+            else if (status == DownloadStatus.Stopped)
+            {
+                // 已取消：释放旧 Service 后重新入队续传。
+                try { h.Service.Dispose(); } catch { /* 忽略 */ }
+                h.Service = null!;
+                EnqueueAndPump(id);
             }
         }
 
@@ -315,6 +338,32 @@ namespace MyDownloader.Core
                 try { h.Service?.Dispose(); } catch { /* 忽略与运行中 RunAsync 的竞争 */ }
                 Persist();
             }
+        }
+
+        /// <summary>覆盖式重新下载：清空分块与目标文件后从头下载，不生成 (1) 副本。</summary>
+        public void Redownload(string id)
+        {
+            if (!_tasks.TryGetValue(id, out var h)) return;
+
+            try { h.Service?.CancelAsync(); } catch { /* 忽略 */ }
+            try { h.Service?.Dispose(); } catch { /* 忽略 */ }
+            h.Service = null!;
+
+            // 删除已存在的目标文件，避免残留。
+            try { if (File.Exists(h.FilePath)) File.Delete(h.FilePath); } catch { /* 忽略 */ }
+
+            // 重置包与进度，从头开始。
+            h.Info.DownloadPackage = new DownloadPackage { Status = DownloadStatus.None, SaveProgress = 0 };
+            h.Info.StartTime = DateTime.Now;
+            h.Info.EndTime = DateTime.MinValue;
+            h.ReceivedBytes = 0;
+            h.TotalBytes = 0;
+            h.SpeedBytesPerSecond = 0;
+            h.ErrorMessage = null;
+
+            Persist();
+            EnqueueAndPump(id);
+            TaskUpdated?.Invoke(this, id);
         }
 
         public void PauseAll()
