@@ -93,6 +93,8 @@ namespace MyDownloader.Core
         private static TaskSnapshot BuildSnapshot(TaskHandle h)
         {
             var package = h.Info.DownloadPackage;
+            var status = package?.Status ?? DownloadStatus.None;
+            var isRunning = status == DownloadStatus.Running;
             var chunks = package?.Chunks;
             var chunkSnapshots = chunks == null
                 ? Array.Empty<ChunkSnapshot>()
@@ -101,7 +103,8 @@ namespace MyDownloader.Core
                     Index = i,
                     Start = c.Start,
                     End = c.End,
-                    Position = c.Position
+                    Position = c.Position,
+                    TaskStatus = status
                 }).ToArray();
 
             return new TaskSnapshot
@@ -112,8 +115,9 @@ namespace MyDownloader.Core
                 Url = h.Url,
                 TotalBytes = h.TotalBytes > 0 ? h.TotalBytes : (package?.TotalFileSize ?? 0),
                 ReceivedBytes = h.ReceivedBytes,
-                SpeedBytesPerSecond = h.SpeedBytesPerSecond,
-                Status = package?.Status ?? DownloadStatus.None,
+                // 非下载中时速度归零，避免暂停/取消后仍显示上一刻速度。
+                SpeedBytesPerSecond = isRunning ? h.SpeedBytesPerSecond : 0,
+                Status = status,
                 ErrorMessage = h.ErrorMessage,
                 ChunkSnapshots = chunkSnapshots
             };

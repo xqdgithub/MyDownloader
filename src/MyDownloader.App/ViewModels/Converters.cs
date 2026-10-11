@@ -12,6 +12,9 @@ namespace MyDownloader.App.ViewModels
             {
                 "完成" => Color.Parse("#52C41A"),
                 "下载中" => Color.Parse("#1677FF"),
+                "已暂停" => Color.Parse("#FAAD14"),
+                "已取消" => Color.Parse("#8C8C8C"),
+                "已失败" => Color.Parse("#FF4D4F"),
                 _ => Color.Parse("#8C8C8C")
             }));
     }
