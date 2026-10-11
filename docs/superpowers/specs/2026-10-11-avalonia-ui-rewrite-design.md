@@ -89,7 +89,8 @@ MyDownloader.sln
 ### 操作语义（状态机）
 - `暂停`：库 `Pause()`，状态 `Paused`，可 `Resume()`。
 - `继续`：仅对 `Paused` 有效，库 `Resume()`。
-- `取消`：库 `CancelAsync()`，状态 `Stopped`，**保留任务记录**。
+- `取消`：库 `CancelAsync()`，状态 `Stopped`，**保留任务记录与分块**。
+- `继续`：对 `Paused` 调库 `Resume()`；对 `Stopped`（含重启后）则**重新入队**（`Service` 重建），基于持久化分块续传。引擎 `Resume` 需支持 `Stopped` 分支。
 - `重新下载`：**覆盖式重下**——清空分块与目标文件后从头下载（避免 `AddTask` 的 `EnsureUniquePath` 产生 `(1)` 副本）；实现为引擎新增 `Redownload(id)`（或明确用 `Remove`+内部覆盖式 `AddTask`）。
 - `删除`：停止并移除记录。
 - **重启语义**：`LoadPersistedTasks` 目前把 `Running/Paused/Stopped/Created` 一律映射为 `Paused`。修订为：`Stopped`（取消）**保持 `Stopped`**，不参与 `ResumeAll` 自动恢复；`Running/Paused/Created` 映射为 `Paused`（可继续）。
@@ -99,6 +100,7 @@ MyDownloader.sln
 - `TaskSnapshot` 增加 `ChunkSnapshots`：每块 `Index`/`Start`/`End`/`Position`/`Progress`/`State`（State 由 `Position/Length` 推导：完成/下载中/等待）。
 - **分块进度采集：直接读 `package.Chunks`，不订阅高频事件。** `DownloadManager` 已把 `h.Info.DownloadPackage` 指向库的 `Package`（`StartHandle`），分块 `Position` 由库在共享 `Chunk` 对象上实时更新，故 `BuildSnapshot` 读取 `package.Chunks` 即可得到实时分块位置，天然与 500ms 拉模式一致，无事件风暴。
 - `LoadPersistedTasks` 按 §7 修订 Stopped 映射。
+- `Resume(id)` 增加 `Stopped` 分支：`Service` 为 null 或状态为 `Stopped` 时重新入队续传。
 - 新增 `Redownload(id)`（覆盖式）。
 - `Cancel(id)` 接线到 UI（主列表与详情窗口）。
 
