@@ -26,6 +26,7 @@
               IsReadOnly="True"
               GridLinesVisibility="Horizontal"
               CanUserResizeColumns="True"
+              DoubleTapped="OnRowDoubleTapped"
               Name="TaskGrid">
       <DataGrid.Columns>
         <DataGridTemplateColumn Header="文件名" Width="*">
@@ -47,6 +48,32 @@
         <DataGridTextColumn Header="速度" Binding="{Binding SpeedText}" Width="100"/>
         <DataGridTextColumn Header="剩余" Binding="{Binding EtaText}" Width="90"/>
         <DataGridTextColumn Header="状态" Binding="{Binding StatusText}" Width="90"/>
+        <DataGridTemplateColumn Header="操作" Width="260">
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate x:DataType="vm:TaskItemViewModel">
+              <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                <Button Content="暂停" FontSize="12" Padding="6,2"
+                        IsVisible="{Binding CanPause}"
+                        Command="{Binding $parent[DataGrid].((vm:MainViewModel)DataContext).PauseItemCommand}"
+                        CommandParameter="{Binding}"/>
+                <Button Content="继续" FontSize="12" Padding="6,2"
+                        IsVisible="{Binding CanResume}"
+                        Command="{Binding $parent[DataGrid].((vm:MainViewModel)DataContext).ResumeItemCommand}"
+                        CommandParameter="{Binding}"/>
+                <Button Content="查看" FontSize="12" Padding="6,2"
+                        Command="{Binding $parent[DataGrid].((vm:MainViewModel)DataContext).ViewDetailCommand}"
+                        CommandParameter="{Binding}"/>
+                <Button Content="打开" FontSize="12" Padding="6,2"
+                        IsVisible="{Binding CanOpen}"
+                        Command="{Binding $parent[DataGrid].((vm:MainViewModel)DataContext).OpenItemCommand}"
+                        CommandParameter="{Binding}"/>
+                <Button Content="删除" FontSize="12" Padding="6,2"
+                        Command="{Binding $parent[DataGrid].((vm:MainViewModel)DataContext).RemoveItemCommand}"
+                        CommandParameter="{Binding}"/>
+              </StackPanel>
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
       </DataGrid.Columns>
     </DataGrid>
   </DockPanel>
