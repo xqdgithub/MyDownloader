@@ -48,12 +48,15 @@ Program.Main
 下载库进度事件频率极高。Manager 只更新内存快照，不向窗口逐事件 `BeginInvoke`；`MainForm` 用约 500ms 的 `Timer` 调 `GetSnapshots()` 增量刷新。窗口开关、托盘、多入口都简单，且无事件风暴。
 
 **数据访问唯一入口**
-- 持久化统一由 Manager 持有唯一的 `SqLiteDataProvider` 实例，其它窗体不再各自 `new`（消除多 EF 上下文并发写同一 SQLite 的锁冲突）。
+- 持久化统一由 Manager 持有 `SqLiteDataProvider`，其它窗体不再各自 `new`（消除多 EF 上下文并发写同一 SQLite 的锁冲突）。
+- **线程安全**：`SQLiteDataContext`（EF `DbContext`）非线程安全。下载完成回调在线程池线程写库、UI 定时器在 UI 线程读快照，所有 provider 读写必须**经 Manager 内部单一锁串行化**（或专用单线程队列封送），禁止多线程直接并发访问同一上下文。
+- **两个数据库**：任务库 `DownloadMainDB` 与设置库 `DownloadSettingDB`（`ConstData.cs:11-12`）各用**独立 provider 实例**，不共用。
 - `SqLiteDataProvider` 的静态缓存键需纳入数据库标识（当前 `KeyType` 仅含 `key`+`type`，`SqLiteDataProvider.cs:177-191`），避免不同库互相污染；`Get` 返回的 List 需深拷贝或视为只读，避免调用方原地修改污染缓存。
 - DB 路径由相对 `./`（`ConstData.cs:11-12`）改为绝对路径（如 `%LocalAppData%\MyDownloader\`），避免托盘/快捷方式启动时工作目录不确定。
 
 **事件推送边界**
-- `TaskUpdated` 仅在**状态变化**或**进度节流后**（约 2 秒）触发，绝不逐进度事件触发；`TaskCompleted` 在终态触发。托盘 Tooltip 与 `MainForm` 共用同一 500ms 定时器刷新，不走事件推送。
+- `TaskUpdated` 仅在**状态变化**或**进度节流后**（约 2 秒）触发，绝不逐进度事件触发；`TaskCompleted` 在终态触发。
+- 托盘 Tooltip 与 `MainForm` **共用 `TrayAppContext` 持有的同一个 500ms 定时器**（不是各自一个），统一读 `GetSnapshots()`，不走事件推送。
 
 ## 4. 下载引擎：DownloadManager
 
@@ -108,7 +111,7 @@ Program.Main
 | 状态 | 现有（Badge） |
 | 操作 | 查看 / 删除，增加"暂停 / 继续"（按状态切换） |
 
-**刷新**：500ms `Timer` 调 `GetSnapshots()`，按 `Id` 增量更新对应行的进度/速度/剩余/状态；不整表重建（避免闪烁、丢失选中/滚动）。删除旧的 `RefreshMainTable` 整表刷新。
+**刷新**：由 `TrayAppContext` 持有的唯一 500ms `Timer` 调 `GetSnapshots()`，同时驱动托盘 Tooltip 与 `MainForm` 表格；`MainForm` 按 `Id` 增量更新对应行的进度/速度/剩余/状态；不整表重建（避免闪烁、丢失选中/滚动）。删除旧的 `RefreshMainTable` 整表刷新。
 - AntdUI 无 `RefreshRow` API，Table 依赖行对象的 `INotifyPropertyChanged` 触发单元格刷新。因此 `TableItem` 的属性 setter 必须调用 `OnPropertyChanged`，且进度/状态等被替换的单元格对象需重建后赋回属性，才能实现增量更新。
 
 **行操作联动**：运行中显示"暂停"；已暂停显示"继续"；已完成显示"打开文件夹"。删除运行中任务需先取消。
@@ -150,11 +153,13 @@ Program.Main
 
 **持久化内容（字段白名单，必须排除 Storage）**
 - **禁止直接序列化整个 `DownloadPackage`**：其公有属性 `Storage`（`DownloadPackage.cs:71`）为 `ConcurrentStream`，`Path` setter 会立即打开 `FileStream`（`ConcurrentStream.cs:24-34`），构造时还会启动后台 Watcher 任务（`ConcurrentStream.cs:158-170`）；内存流的 `Data` getter 会把整文件读入 JSON（`ConcurrentStream.cs:39-61`）。直接序列化会导致**启动时对每个任务打开文件句柄 + 拉起后台线程 + 句柄泄漏**。
-- 采用持久化 DTO（或给 `Storage`/`ReceivedBytesSize`/`InMemoryStream` 加 `[JsonIgnore]`），仅持久化白名单字段：
+- 采用**持久化 DTO**（首选），仅持久化白名单字段：
   - 任务层：`ID`、`Url`、`FilePath`、`StartTime`、`EndTime`、`Status`。
-  - package 层：`TotalFileSize`、`FileName`、`Urls`、`IsSupportDownloadInRange`，以及 `Chunks` 的 `Start` / `End` / `Position`。
+  - package 层：`TotalFileSize`、`FileName`、`Urls`、`IsSupportDownloadInRange`，以及 `Chunks` 的 `Start` / `End` / `Position` / `MaxTryAgainOnFailover` / `Timeout`。
+- **Chunk 重试参数必须一并持久化或回填**：续传走 `ChunkHub.SetFileChunks` 的 `package.Validate()` 复用分支（`ChunkHub.cs:42-45`），该分支**不会**回填重试参数；若反序列化的 `Chunk.MaxTryAgainOnFailover` 为默认 0（`Chunk.cs:33`），则 `CanTryAgainOnFailover()` 恒为 false（`Chunk.cs:90`），续传时瞬时错误重试被禁用、`Timeout` 退回 1000ms。因此 DTO 须保留这两个字段，或在恢复时按当前配置回填。
+- 备选：给 `Storage`/`ReceivedBytesSize`/`InMemoryStream` 加 `[JsonIgnore]` 并直接序列化 `Chunk[]`——此路径会自动保留 `Chunk` 全字段（含重试参数），保真度更高但需改动本地维护的库。二者择一，推荐 DTO。
 - 反序列化后**不得**创建任何文件句柄或后台任务；`Storage` 一律为 null，续传时由 `BuildStorage` 重新创建。
-- 不持久化 `Speed`（重启后无意义）；进度显示可由 `Chunks` 的 `Position` 推导，如保留 `Progress` 亦仅作展示缓存。
+- 不持久化实时速度（库中速度来自 `Bandwidth`，不在 package 上）；进度显示可由 `Chunks` 的 `Position` 推导，如保留 `Progress` 亦仅作展示缓存。
 
 **续传原理**
 - `DownloadFileTaskAsync(package, urls)` 接受已有 package；库在 `ChunkHub.SetFileChunks` 检测到 `Chunks != null` 即 `package.Validate()` 复用已有位置（`ChunkHub.cs:42-45`），未完成分块从 `Position` 继续。
