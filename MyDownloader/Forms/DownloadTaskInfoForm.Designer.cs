@@ -7,19 +7,6 @@
         /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary>
-        ///  Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing && (components != null))
-            {
-                components.Dispose();
-            }
-            base.Dispose(disposing);
-        }
-
         #region Windows Form Designer generated code
 
         /// <summary>
@@ -192,7 +179,6 @@
             flowLayoutPanel4.Name = "flowLayoutPanel4";
             flowLayoutPanel4.Size = new Size(838, 50);
             flowLayoutPanel4.TabIndex = 7;
-            flowLayoutPanel4.Paint += flowLayoutPanel4_Paint;
             // 
             // label5
             // 
@@ -205,7 +191,6 @@
             label5.TabIndex = 0;
             label5.Text = "  保存路径:";
             label5.TooltipConfig = null;
-            label5.Click += label5_Click;
             // 
             // input2
             // 
