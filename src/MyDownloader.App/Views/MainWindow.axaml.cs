@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using MyDownloader.App.Services;
 using MyDownloader.App.ViewModels;
 
 namespace MyDownloader.App.Views
@@ -9,6 +10,9 @@ namespace MyDownloader.App.Views
         {
             InitializeComponent();
             DataContext = new MainViewModel();
+
+            var theme = this.FindControl<Button>("ThemeButton");
+            if (theme != null) theme.Click += (_, _) => ThemeService.Toggle();
         }
     }
 }

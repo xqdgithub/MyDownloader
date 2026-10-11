@@ -17,6 +17,9 @@ namespace MyDownloader.Core
         /// <summary>是否跟随系统代理。</summary>
         public bool UseSystemProxy { get; set; } = true;
 
+        /// <summary>是否使用深色主题。</summary>
+        public bool DarkTheme { get; set; }
+
         /// <summary>取默认下载目录（系统"下载"文件夹）。</summary>
         public string GetDefaultDir()
         {
