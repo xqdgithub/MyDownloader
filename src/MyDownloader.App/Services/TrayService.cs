@@ -47,6 +47,10 @@ namespace MyDownloader.App.Services
             };
             _tray.Clicked += (_, _) => _showMainWindow();
 
+            // 必须把图标注册进 Application.TrayIcons，否则托盘不会显示。
+            var icons = new TrayIcons { _tray };
+            TrayIcon.SetIcons(Avalonia.Application.Current!, icons);
+
             _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
             _timer.Tick += (_, _) => RefreshTooltip();
             _timer.Start();
