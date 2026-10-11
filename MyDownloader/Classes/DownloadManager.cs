@@ -153,8 +153,11 @@ namespace MyDownloader.Classes
             h.Service.ChunkDownloadProgressChanged += (_, e) => OnProgress(h, e);
             h.Service.DownloadFileCompleted += (_, e) => OnCompleted(h, e);
 
-            h.Info.DownloadPackage = h.Service.Package;
-            h.Info.DownloadPackage.Status = DownloadStatus.Running;
+            if (h.Info.DownloadPackage?.Chunks is not { Length: > 0 })
+            {
+                h.Info.DownloadPackage = h.Service.Package;
+            }
+            h.Info.DownloadPackage!.Status = DownloadStatus.Running;
 
             _ = RunAsync(h);
         }
