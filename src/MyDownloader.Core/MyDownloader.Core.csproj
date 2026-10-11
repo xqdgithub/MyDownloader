@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Downloader\src\Downloader\Downloader.csproj" />
-    <ProjectReference Include="..\..\..\qdx\QDX.Service\QDX.Service.csproj" />
+    <PackageReference Include="Downloader" Version="3.3.4" />
+    <ProjectReference Include="..\QDX.Service\QDX.Service.csproj" />
   </ItemGroup>
 
 </Project>

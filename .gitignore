@@ -363,3 +363,6 @@ MigrationBackup/
 FodyWeavers.xsd
 # 运行时生成的数据库
 *.db
+
+# QDX.Service 的数据库模板资源（必须纳入版本控制）
+!src/QDX.Service/StorageServices/default.db
