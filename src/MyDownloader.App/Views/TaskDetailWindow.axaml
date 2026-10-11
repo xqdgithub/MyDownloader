@@ -1,0 +1,46 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:MyDownloader.App.ViewModels"
+        xmlns:core="using:MyDownloader.Core"
+        x:Class="MyDownloader.App.Views.TaskDetailWindow"
+        x:DataType="vm:TaskDetailViewModel"
+        Title="下载任务" Width="640" Height="520" MinWidth="520" MinHeight="420">
+  <DockPanel Margin="16">
+    <StackPanel DockPanel.Dock="Top" Spacing="6">
+      <TextBlock Text="{Binding FileName}" FontSize="18" FontWeight="Bold" TextTrimming="CharacterEllipsis"/>
+      <SelectableTextBlock Text="{Binding Url}" Foreground="#666" TextTrimming="CharacterEllipsis"/>
+      <SelectableTextBlock Text="{Binding FilePath}" Foreground="#666" TextTrimming="CharacterEllipsis"/>
+    </StackPanel>
+
+    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="0,12">
+      <Button Content="暂停" Command="{Binding PauseCommand}"/>
+      <Button Content="继续" Command="{Binding ResumeCommand}"/>
+      <Button Content="取消" Command="{Binding CancelCommand}"/>
+      <Button Content="重新下载" Command="{Binding RedownloadCommand}"/>
+    </StackPanel>
+
+    <StackPanel DockPanel.Dock="Top" Spacing="6">
+      <ProgressBar Value="{Binding Progress}" Minimum="0" Maximum="100" Height="18"/>
+      <StackPanel Orientation="Horizontal" Spacing="20">
+        <TextBlock Text="{Binding SpeedText, StringFormat='速度: {0}'}"/>
+        <TextBlock Text="{Binding OverviewText, StringFormat='总览: {0}'}"/>
+        <TextBlock Text="{Binding EtaText, StringFormat='剩余: {0}'}"/>
+        <TextBlock Text="{Binding StatusText}"/>
+      </StackPanel>
+    </StackPanel>
+
+    <ScrollViewer Margin="0,12,0,0">
+      <ItemsControl ItemsSource="{Binding Chunks}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="core:ChunkSnapshot">
+            <Grid ColumnDefinitions="60,*,70" Margin="0,3">
+              <TextBlock Text="{Binding Index, StringFormat='块 {0}'}" VerticalAlignment="Center"/>
+              <ProgressBar Grid.Column="1" Value="{Binding Progress}" Minimum="0" Maximum="100" Height="12" VerticalAlignment="Center"/>
+              <TextBlock Grid.Column="2" Text="{Binding State}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="8,0,0,0"/>
+            </Grid>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+  </DockPanel>
+</Window>
