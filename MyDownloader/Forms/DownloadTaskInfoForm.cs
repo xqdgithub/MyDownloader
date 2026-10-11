@@ -34,6 +34,13 @@ namespace MyDownloader
             downloadTaskInfo = taskInfo;
         }
 
+        /// <summary>按任务 Id 构造（Task 11 将完整重写本窗口，此处仅保证编译）。</summary>
+        public DownloadTaskInfoForm(string taskId)
+        {
+            InitializeComponent();
+            downloadTaskInfo = null;
+        }
+
         private void MainForm_Load(object sender, EventArgs e)
         {
             Init();
