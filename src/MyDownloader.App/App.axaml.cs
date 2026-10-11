@@ -27,6 +27,17 @@ namespace MyDownloader.App
                 DownloadManager.Instance.LoadPersistedTasks();
                 ThemeService.Apply(DownloadManager.Instance.Settings);
 
+                // 任务完成/失败时弹 Toast 通知。
+                DownloadManager.Instance.TaskCompleted += (_, id) =>
+                {
+                    var snap = DownloadManager.Instance.GetSnapshot(id);
+                    if (snap == null) return;
+                    if (snap.Status == Downloader.DownloadStatus.Completed)
+                        NotificationService.Show("下载完成", snap.FileName);
+                    else if (snap.Status == Downloader.DownloadStatus.Failed)
+                        NotificationService.Show("下载失败", snap.FileName);
+                };
+
                 _mainWindow = new MainWindow();
                 _mainWindow.Closing += (_, e) =>
                 {

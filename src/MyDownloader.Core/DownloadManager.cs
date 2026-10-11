@@ -227,10 +227,15 @@ namespace MyDownloader.Core
                 {
                     package.FileName = h.FilePath;
                     package.Urls = new[] { h.Url };
+                    // 库会把 Service.Package 接管为该 package，二者此后为同一对象。
                     await h.Service.DownloadFileTaskAsync(package, new[] { h.Url });
                 }
                 else
                 {
+                    // 从头下载：使用 Service 的空包，并让 Info 指向同一对象，
+                    // 避免进度/状态写在 Service.Package 而 Info 仍停在旧包导致状态卡死。
+                    h.Info.DownloadPackage = h.Service.Package;
+                    h.Info.DownloadPackage.Status = DownloadStatus.Running;
                     await h.Service.DownloadFileTaskAsync(h.Url, h.FilePath);
                 }
             }
