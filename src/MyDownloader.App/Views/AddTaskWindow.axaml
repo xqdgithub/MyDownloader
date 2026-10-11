@@ -1,0 +1,26 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:MyDownloader.App.ViewModels"
+        x:Class="MyDownloader.App.Views.AddTaskWindow"
+        x:DataType="vm:AddTaskViewModel"
+        Title="新建任务" Width="620" Height="240"
+        WindowStartupLocation="CenterOwner">
+  <StackPanel Margin="16" Spacing="12">
+    <StackPanel Spacing="4">
+      <TextBlock Text="下载地址"/>
+      <TextBox Text="{Binding Url}" PlaceholderText="https://..."/>
+    </StackPanel>
+    <StackPanel Spacing="4">
+      <TextBlock Text="保存路径"/>
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBox Text="{Binding FilePath}"/>
+        <Button Grid.Column="1" Content="浏览..." Name="BrowseButton" Margin="8,0,0,0"/>
+      </Grid>
+    </StackPanel>
+    <TextBlock Text="{Binding Error}" Foreground="#D33" IsVisible="{Binding Error, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+      <Button Content="取消" Command="{Binding CancelCommand}"/>
+      <Button Content="确定" Classes="accent" Command="{Binding ConfirmCommand}"/>
+    </StackPanel>
+  </StackPanel>
+</Window>
