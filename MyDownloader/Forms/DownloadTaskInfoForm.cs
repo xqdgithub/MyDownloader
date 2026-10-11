@@ -50,6 +50,16 @@ namespace MyDownloader
 
         private void btnStart_Click(object sender, EventArgs e)
         {
+            var snap = DownloadManager.Instance.GetSnapshot(_taskId);
+            // 未修改地址与路径时直接关闭，避免误丢已下载进度。
+            if (snap != null
+                && input1.Text == (snap.Url ?? string.Empty)
+                && input2.Text == snap.FilePath)
+            {
+                Close();
+                return;
+            }
+
             using var selectForm = new DownloadTaskSelectForm((input1.Text, input2.Text));
             if (selectForm.ShowDialog() == DialogResult.OK)
             {
